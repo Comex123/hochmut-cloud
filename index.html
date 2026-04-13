@@ -5,115 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta
     name="description"
-    content="Hochmut Startseite mit schnellem Zugang zu Archiv, Rangliste, Editor und Discord."
+    content="Hochmut Gearliste mit direktem Discord-Login und schnellem Zugang zum eigenen Eintrag."
   >
-  <title>Hochmut | Start</title>
+  <title>Hochmut | Gearliste</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="menu-page">
-  <div class="page-shell">
-    <header class="site-header menu-header">
-      <a class="brand" href="/" aria-label="Hochmut Menue">
+<body class="overview-page">
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Hochmut Startseite">
         <span class="brand-mark">HM</span>
         <span class="brand-copy">
           <strong id="menu-guild-name">Hochmut</strong>
-          <span>Startseite fuer Archiv, Rangliste und Mitgliederpflege</span>
+          <span>Gearliste der Gilde</span>
         </span>
       </a>
 
-      <button
-        class="nav-toggle"
-        type="button"
-        aria-expanded="false"
-        aria-controls="main-nav"
-        aria-label="Navigation oeffnen"
-      >
-        <span></span>
-        <span></span>
-      </button>
-
-      <nav class="site-nav" id="main-nav" aria-label="Hauptnavigation">
-        <a href="/archiv/#leaderboard">Rangliste</a>
-        <a href="/archiv/#editor">Gear eintragen</a>
-      </nav>
+      <div class="header-actions">
+        <a class="button button-secondary" id="menu-auth-action" href="/auth/discord?next=%2Farchiv%23editor">Mit Discord anmelden</a>
+        <a class="button button-primary" href="/archiv/#editor">Gear eintragen</a>
+      </div>
     </header>
 
-    <main class="menu-main">
-      <section class="menu-hero compact-hero">
-        <div class="menu-hero-copy reveal">
-          <span class="hero-ribbon">Hochmut</span>
-          <p class="eyebrow">GILDENUEBERSICHT</p>
-          <h1>Gearliste der Gilde auf einen Blick.</h1>
+    <main class="overview-main">
+      <section class="overview-hero reveal">
+        <div class="overview-hero-copy">
+          <p class="eyebrow">HOCHMUT</p>
+          <h1>Die Gearliste der Gilde.</h1>
           <p class="lead">
-            Mehr braucht es erstmal nicht: die aktuelle Rangliste ansehen, sich mit
-            Discord anmelden und den eigenen Eintrag oeffnen.
+            Nur das Wesentliche: aktueller Stand der Mitglieder, Discord-Login und ein
+            direkter Weg zum eigenen Eintrag.
           </p>
-
-          <div class="hero-actions">
-            <a class="button button-primary" href="/archiv/#editor">Gear eintragen</a>
-            <a class="button button-secondary" id="menu-auth-action" href="/auth/discord?next=%2Farchiv%23editor">Mit Discord anmelden</a>
-          </div>
-
-          <div class="hero-metrics menu-metrics">
-            <article class="metric-card">
-              <span>Eintraege</span>
-              <strong id="menu-stat-count">0</strong>
-            </article>
-            <article class="metric-card">
-              <span>Top GS</span>
-              <strong id="menu-stat-top-score">0</strong>
-            </article>
-            <article class="metric-card">
-              <span>Zuletzt</span>
-              <strong id="menu-stat-updated">-</strong>
-            </article>
-          </div>
         </div>
 
-        <aside class="menu-hero-panel reveal">
-          <div class="menu-focus-card">
-            <div class="menu-focus-head">
-              <span class="status-pill">Kurzstatus</span>
-              <span class="menu-focus-status" id="menu-auth-status">Wird geladen</span>
-            </div>
-            <h2 id="menu-focus-title">Aktuelle Gildenlage</h2>
-            <p id="menu-focus-copy">
-              Die wichtigsten Werte werden direkt aus dem Archiv geladen.
-            </p>
-            <dl class="menu-focus-list">
-              <div>
-                <dt>Top Eintrag</dt>
-                <dd id="menu-top-entry">-</dd>
-              </div>
-              <div>
-                <dt>Proofs</dt>
-                <dd id="menu-proof-count">0</dd>
-              </div>
-              <div>
-                <dt>Discord</dt>
-                <dd id="menu-discord-status">Wird geprueft</dd>
-              </div>
-            </dl>
-          </div>
-        </aside>
+        <div class="overview-status-strip">
+          <article class="status-tile">
+            <span>Eintraege</span>
+            <strong id="menu-stat-count">0</strong>
+          </article>
+          <article class="status-tile">
+            <span>Top GS</span>
+            <strong id="menu-stat-top-score">0</strong>
+          </article>
+          <article class="status-tile">
+            <span>Zuletzt</span>
+            <strong id="menu-stat-updated">-</strong>
+          </article>
+          <article class="status-tile">
+            <span>Discord</span>
+            <strong id="menu-auth-status">Wird geladen</strong>
+          </article>
+        </div>
       </section>
 
-      <section class="section menu-section" id="menu-overview">
-        <div class="section-heading reveal">
-          <p class="eyebrow">GEARLISTE</p>
-          <h2>Die komplette Uebersicht der Gilde.</h2>
-          <p class="section-intro">
-            Sortiert nach Gearscore und direkt lesbar, ohne zusaetzliche Bereiche.
-          </p>
+      <section class="leaderboard-panel reveal">
+        <div class="leaderboard-panel-head">
+          <div>
+            <p class="eyebrow">AKTUELLER STAND</p>
+            <h2>Uebersicht aller gespeicherten Gear-Eintraege.</h2>
+          </div>
+          <div class="leaderboard-panel-meta">
+            <span id="menu-top-entry">Top Eintrag: -</span>
+            <span><strong id="menu-proof-count">0</strong> Proofs</span>
+            <span id="menu-discord-status">Discord wird geprueft</span>
+          </div>
         </div>
 
-        <div class="overview-list reveal" id="menu-leaderboard-grid"></div>
+        <div class="overview-table-head">
+          <span>Rang</span>
+          <span>Mitglied</span>
+          <span>State</span>
+          <span>AP / AAP</span>
+          <span>DP</span>
+          <span>GS</span>
+          <span>Proof</span>
+        </div>
+
+        <div class="overview-table" id="menu-leaderboard-grid"></div>
       </section>
     </main>
 
-    <footer class="site-footer menu-footer">
-      <p><span id="menu-footer-guild-name">Hochmut</span> Startseite <span id="current-year"></span></p>
-      <p>Klare Wege fuer Rangliste, Editor, Proofs und Discord.</p>
+    <footer class="site-footer">
+      <p><span id="menu-footer-guild-name">Hochmut</span> Gildenarchiv <span id="current-year"></span></p>
+      <p>Klarer Ueberblick fuer Gear und Discord.</p>
     </footer>
   </div>
 

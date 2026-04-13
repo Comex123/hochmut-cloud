@@ -1,6 +1,3 @@
-const navToggle = document.querySelector(".nav-toggle");
-const siteNav = document.querySelector(".site-nav");
-const revealItems = document.querySelectorAll(".reveal");
 const currentYear = document.querySelector("#current-year");
 
 const guildNameTargets = [
@@ -16,8 +13,6 @@ const proofCount = document.querySelector("#menu-proof-count");
 const discordStatus = document.querySelector("#menu-discord-status");
 const authStatus = document.querySelector("#menu-auth-status");
 const authAction = document.querySelector("#menu-auth-action");
-const focusTitle = document.querySelector("#menu-focus-title");
-const focusCopy = document.querySelector("#menu-focus-copy");
 const overviewList = document.querySelector("#menu-leaderboard-grid");
 
 const setText = (element, value) => {
@@ -68,11 +63,7 @@ const applyMeta = (meta) => {
     }
   });
 
-  if (meta.discord_invite) {
-    setText(discordStatus, "Verbunden");
-  } else {
-    setText(discordStatus, "Noch offen");
-  }
+  setText(discordStatus, meta.discord_invite ? "Discord verbunden" : "Discord offen");
 };
 
 const renderOverview = (items) => {
@@ -84,11 +75,8 @@ const renderOverview = (items) => {
 
   if (!entries.length) {
     overviewList.innerHTML = `
-      <article class="overview-row">
-        <div class="overview-row-main">
-          <strong>Noch keine Gear-Eintraege vorhanden.</strong>
-          <span>Der erste Eintrag kann direkt ueber den Gear-Button angelegt werden.</span>
-        </div>
+      <article class="overview-table-row empty-row">
+        <span class="empty-row-copy">Noch keine Gear-Eintraege vorhanden.</span>
       </article>
     `;
     return;
@@ -98,21 +86,27 @@ const renderOverview = (items) => {
     .map((entry, index) => {
       const displayName = entry.familyname || entry.discord_name || entry.discord_id;
       const portrait = entry.portrait_url
-        ? `<img class="overview-row-portrait" src="${escapeHtml(entry.portrait_url)}" alt="${escapeHtml(entry.class || "Klasse")}">`
-        : `<span class="overview-row-portrait overview-row-portrait-fallback">${escapeHtml((entry.class || "?").charAt(0))}</span>`;
+        ? `<img class="overview-player-portrait" src="${escapeHtml(entry.portrait_url)}" alt="${escapeHtml(entry.class || "Klasse")}">`
+        : `<span class="overview-player-portrait overview-player-portrait-fallback">${escapeHtml((entry.class || "?").charAt(0))}</span>`;
+      const proof = entry.proof_url
+        ? `<a class="table-pill" href="${escapeHtml(entry.proof_url)}" target="_blank" rel="noreferrer">Proof</a>`
+        : `<span class="table-pill is-muted">-</span>`;
 
       return `
-        <article class="overview-row">
-          <div class="overview-row-rank">#${index + 1}</div>
-          <div class="overview-row-main">
-            <strong>${escapeHtml(displayName)}</strong>
-            <span>${escapeHtml(entry.class || "-")} | ${escapeHtml(entry.state || "-")} | Aktualisiert ${escapeHtml(formatTimestamp(entry.updated_at))}</span>
+        <article class="overview-table-row">
+          <span class="table-rank">#${index + 1}</span>
+          <div class="overview-player">
+            ${portrait}
+            <div class="overview-player-copy">
+              <strong>${escapeHtml(displayName)}</strong>
+              <span>${escapeHtml(entry.class || "-")}</span>
+            </div>
           </div>
-          <div class="overview-row-stats">
-            <span>AP/AAP ${escapeHtml(entry.ap)} / ${escapeHtml(entry.aap)}</span>
-            <strong>DP ${escapeHtml(entry.dp)} | GS ${escapeHtml(entry.gearscore)}</strong>
-          </div>
-          ${portrait}
+          <span class="table-cell">${escapeHtml(entry.state || "-")}</span>
+          <span class="table-cell">${escapeHtml(entry.ap)} / ${escapeHtml(entry.aap)}</span>
+          <span class="table-cell">${escapeHtml(entry.dp)}</span>
+          <strong class="table-gs">${escapeHtml(entry.gearscore)}</strong>
+          ${proof}
         </article>
       `;
     })
@@ -134,13 +128,9 @@ const applyEntries = (items) => {
 
   if (featured) {
     const displayName = featured.familyname || featured.discord_name || featured.discord_id;
-    setText(topEntry, `${displayName} | GS ${featured.gearscore}`);
-    setText(focusTitle, "Aktuelle Gildenlage");
-    setText(focusCopy, "Die Gearliste ist live und nach Gearscore sortiert.");
+    setText(topEntry, `Top Eintrag: ${displayName} | GS ${featured.gearscore}`);
   } else {
-    setText(topEntry, "Noch kein Eintrag");
-    setText(focusTitle, "Archiv bereit");
-    setText(focusCopy, "Sobald Eintraege gespeichert sind, erscheinen sie hier.");
+    setText(topEntry, "Top Eintrag: -");
   }
 
   renderOverview(entries);
@@ -148,7 +138,7 @@ const applyEntries = (items) => {
 
 const applySession = (session) => {
   if (!session.oauth_ready) {
-    setText(authStatus, "Discord Login offen");
+    setText(authStatus, "Login offen");
     if (authAction) {
       authAction.href = "/archiv/#editor";
       authAction.textContent = "Discord spaeter verbinden";
@@ -157,7 +147,7 @@ const applySession = (session) => {
   }
 
   if (session.user) {
-    setText(authStatus, "Discord verbunden");
+    setText(authStatus, "Verbunden");
     if (authAction) {
       authAction.href = "/archiv/#editor";
       authAction.textContent = "Meinen Eintrag oeffnen";
@@ -175,39 +165,6 @@ if (currentYear) {
   currentYear.textContent = new Date().getFullYear();
 }
 
-if (navToggle && siteNav) {
-  navToggle.addEventListener("click", () => {
-    const isExpanded = navToggle.getAttribute("aria-expanded") === "true";
-    navToggle.setAttribute("aria-expanded", String(!isExpanded));
-    siteNav.classList.toggle("is-open", !isExpanded);
-  });
-
-  siteNav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      navToggle.setAttribute("aria-expanded", "false");
-      siteNav.classList.remove("is-open");
-    });
-  });
-}
-
-if ("IntersectionObserver" in window) {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.16 }
-  );
-
-  revealItems.forEach((item) => observer.observe(item));
-} else {
-  revealItems.forEach((item) => item.classList.add("is-visible"));
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     const [meta, gears, session] = await Promise.all([
@@ -220,7 +177,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     applyEntries(gears.items || []);
     applySession(session);
   } catch (error) {
-    setText(focusTitle, "Uebersicht bereit");
-    setText(focusCopy, error.message);
+    setText(topEntry, error.message);
   }
 });
