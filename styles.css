@@ -712,6 +712,17 @@ h3 {
   gap: 14px;
 }
 
+.life-skill-list-simple {
+  display: grid;
+  gap: 14px;
+}
+
+.life-skill-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .scan-shell {
   display: flex;
   align-items: center;
@@ -844,7 +855,8 @@ h3 {
 @media (max-width: 1020px) {
   .editor-layout-simple,
   .form-grid,
-  .life-skill-editor-grid {
+  .life-skill-editor-grid,
+  .life-skill-row {
     grid-template-columns: 1fr;
   }
 
