@@ -1,6 +1,19 @@
 import { getPortraitUrl, normalizeLifeSkills } from "./constants.js";
 import { SEED_GEAR_ENTRIES } from "./seed-data.js";
 
+const normalizeProofUrl = (value) => {
+  const proofUrl = String(value || "").trim();
+  if (!proofUrl) {
+    return "";
+  }
+
+  if (proofUrl.startsWith("/proofs/")) {
+    return `https://cdn.jsdelivr.net/gh/Comex123/hochmut-cloud@main${proofUrl}`;
+  }
+
+  return proofUrl;
+};
+
 export const ensureDbBinding = (db) => {
   if (db && typeof db.prepare === "function") {
     return db;
@@ -47,8 +60,8 @@ const mapRowToEntry = (row) => {
     contribution_points: row.contribution_points || "",
     life_skills: lifeSkills,
     notes: row.notes || "",
-    proof: row.proof_url || "",
-    proof_url: row.proof_url || "",
+    proof: normalizeProofUrl(row.proof_url),
+    proof_url: normalizeProofUrl(row.proof_url),
     portrait_url: getPortraitUrl(row.player_class),
     updated_at: row.updated_at || "",
   };
