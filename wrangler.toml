@@ -1,3 +1,11 @@
+name = "hochmut-cloud"
+compatibility_date = "2026-04-13"
+pages_build_output_dir = "."
+
+[vars]
+GUILD_NAME = "Hochmut"
+DISCORD_INVITE = ""
+
 [[d1_databases]]
 binding = "DB"
 database_name = "hochmut-gears"

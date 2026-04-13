@@ -45,6 +45,15 @@ Danach die IDs in [wrangler.toml](C:/Users/Daniel/Desktop/GearflexWeb/cloudflare
 - `database_id`
 - `preview_database_id`
 
+Wichtig fuer Git-Deploys ueber Pages:
+
+- im Pages-Projekt unter `Einstellungen` -> `Bindungen`
+- `Hinzufuegen` -> `D1 database`
+- Variablenname exakt `DB`
+- deine D1-Datenbank auswaehlen
+
+Wenn `/gear_link` funktioniert, aber `/gear_list` oder `/gear_show` nur ablaufen, fehlt fast immer genau diese `DB`-Bindung.
+
 Migration anwenden:
 
 ```bash

@@ -12,9 +12,18 @@ import { getSessionUser } from "../../_lib/auth.js";
 import { getEntry, getGearRecord, listEntries, upsertGear } from "../../_lib/db.js";
 import { jsonError, jsonResponse } from "../../_lib/http.js";
 
+const publicDbError = (error) =>
+  error?.code === "missing_db_binding"
+    ? "Cloudflare D1 ist im Pages-Projekt noch nicht als Binding 'DB' verbunden. Bitte unter Einstellungen > Bindungen die D1-Datenbank an 'DB' binden und neu bereitstellen."
+    : "Die Geardaten konnten gerade nicht geladen werden.";
+
 export const onRequestGet = async ({ env }) => {
-  const items = await listEntries(env.DB);
-  return jsonResponse({ count: items.length, items });
+  try {
+    const items = await listEntries(env.DB);
+    return jsonResponse({ count: items.length, items });
+  } catch (error) {
+    return jsonError(publicDbError(error), error?.code === "missing_db_binding" ? 500 : 500);
+  }
 };
 
 export const onRequestPost = async ({ request, env }) => {
@@ -33,7 +42,12 @@ export const onRequestPost = async ({ request, env }) => {
   }
 
   const discordId = cleanText(sessionUser.id);
-  const existing = await getGearRecord(env.DB, discordId);
+  let existing;
+  try {
+    existing = await getGearRecord(env.DB, discordId);
+  } catch (error) {
+    return jsonError(publicDbError(error), error?.code === "missing_db_binding" ? 500 : 500);
+  }
   const proofLink = cleanText(formData.get("proof_link"));
   const clearProof = ["1", "true", "yes", "on"].includes(cleanText(formData.get("clear_proof")).toLowerCase());
 
@@ -89,11 +103,15 @@ export const onRequestPost = async ({ request, env }) => {
     updated_at: new Date().toISOString(),
   };
 
-  await upsertGear(env.DB, payload);
-  const item = await getEntry(env.DB, discordId);
+  try {
+    await upsertGear(env.DB, payload);
+    const item = await getEntry(env.DB, discordId);
 
-  return jsonResponse({
-    message: "Eintrag gespeichert. Cloudflare D1 und Discord-App sind jetzt im gleichen Stand.",
-    item,
-  });
+    return jsonResponse({
+      message: "Eintrag gespeichert. Cloudflare D1 und Discord-App sind jetzt im gleichen Stand.",
+      item,
+    });
+  } catch (error) {
+    return jsonError(publicDbError(error), error?.code === "missing_db_binding" ? 500 : 500);
+  }
 };

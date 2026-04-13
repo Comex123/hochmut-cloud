@@ -24,10 +24,10 @@ export const oauthReady = (env) =>
 export const buildDiscordLoginUrl = (env, state) => {
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: env.DISCORD_CLIENT_ID,
+    client_id: cleanText(env.DISCORD_CLIENT_ID),
     scope: "identify",
-    redirect_uri: env.DISCORD_REDIRECT_URI,
-    state,
+    redirect_uri: cleanText(env.DISCORD_REDIRECT_URI),
+    state: cleanText(state),
     prompt: "consent",
   });
 
@@ -35,16 +35,20 @@ export const buildDiscordLoginUrl = (env, state) => {
 };
 
 export const exchangeDiscordCode = async (code, env) => {
+  const clientId = cleanText(env.DISCORD_CLIENT_ID);
+  const clientSecret = cleanText(env.DISCORD_CLIENT_SECRET);
+  const redirectUri = cleanText(env.DISCORD_REDIRECT_URI);
+
   const response = await fetch("https://discord.com/api/v10/oauth2/token", {
     method: "POST",
     headers: {
-      authorization: `Basic ${btoa(`${env.DISCORD_CLIENT_ID}:${env.DISCORD_CLIENT_SECRET}`)}`,
+      authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
       "content-type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",
-      code,
-      redirect_uri: env.DISCORD_REDIRECT_URI,
+      code: cleanText(code),
+      redirect_uri: redirectUri,
     }),
   });
 
@@ -196,6 +200,14 @@ const resolveTargetDiscordId = (interaction) =>
   cleanText(interaction.member?.user?.id) ||
   cleanText(interaction.user?.id);
 
+const interactionErrorMessage = (error) => {
+  if (error?.code === "missing_db_binding") {
+    return "Cloudflare D1 ist noch nicht als Binding 'DB' mit diesem Pages-Projekt verbunden. Bitte in Cloudflare unter Einstellungen > Bindungen die D1-Datenbank an 'DB' binden und danach neu bereitstellen.";
+  }
+
+  return "Discord konnte die Geardaten gerade nicht laden. Bitte kurz spaeter erneut versuchen.";
+};
+
 export const handleInteraction = async (interaction, env, origin) => {
   if (interaction.type === 1) {
     return interactionResponse({ type: 1 });
@@ -213,16 +225,59 @@ export const handleInteraction = async (interaction, env, origin) => {
 
   const commandName = interaction.data?.name;
 
-  if (commandName === "gear_show") {
-    const discordId = resolveTargetDiscordId(interaction);
-    const entry = await getEntry(env.DB, discordId);
+  try {
+    if (commandName === "gear_show") {
+      const discordId = resolveTargetDiscordId(interaction);
+      const entry = await getEntry(env.DB, discordId);
 
-    if (!entry) {
+      if (!entry) {
+        return interactionResponse({
+          type: 4,
+          data: {
+            content: "Fuer diesen Discord-User wurde noch kein Gear-Eintrag gefunden.",
+            flags: 64,
+          },
+        });
+      }
+
       return interactionResponse({
         type: 4,
         data: {
-          content: "Fuer diesen Discord-User wurde noch kein Gear-Eintrag gefunden.",
-          flags: 64,
+          embeds: [buildGearEmbed(entry, origin)],
+        },
+      });
+    }
+
+    if (commandName === "gear_list") {
+      const entries = (await listEntries(env.DB)).slice(0, 10);
+      const description = entries.length
+        ? entries
+            .map(
+              (entry, index) =>
+                `**#${index + 1} ${entry.familyname || entry.discord_name || entry.discord_id}**\n${entry.class} | ${entry.state} | ${entry.ap}/${entry.aap}/${entry.dp} | GS ${entry.gearscore}`
+            )
+            .join("\n\n")
+        : "Noch keine Geardaten vorhanden.";
+
+      return interactionResponse({
+        type: 4,
+        data: {
+          embeds: [
+            {
+              title: "Hochmut Rangliste",
+              description,
+              color: 0x7c5a3a,
+            },
+          ],
+        },
+      });
+    }
+
+    if (commandName === "gear_link") {
+      return interactionResponse({
+        type: 4,
+        data: {
+          content: `${absoluteUrl(origin, safeNextUrl("/archiv/#editor"))} - hier kannst du dein Gear im Web pflegen.`,
         },
       });
     }
@@ -230,50 +285,17 @@ export const handleInteraction = async (interaction, env, origin) => {
     return interactionResponse({
       type: 4,
       data: {
-        embeds: [buildGearEmbed(entry, origin)],
+        content: "Dieser Slash-Command ist in der Cloud-Version noch nicht hinterlegt.",
+        flags: 64,
       },
     });
-  }
-
-  if (commandName === "gear_list") {
-    const entries = (await listEntries(env.DB)).slice(0, 10);
-    const description = entries.length
-      ? entries
-          .map(
-            (entry, index) =>
-              `**#${index + 1} ${entry.familyname || entry.discord_name || entry.discord_id}**\n${entry.class} | ${entry.state} | ${entry.ap}/${entry.aap}/${entry.dp} | GS ${entry.gearscore}`
-          )
-          .join("\n\n")
-      : "Noch keine Geardaten vorhanden.";
-
+  } catch (error) {
     return interactionResponse({
       type: 4,
       data: {
-        embeds: [
-          {
-            title: "Hochmut Rangliste",
-            description,
-            color: 0x7c5a3a,
-          },
-        ],
+        content: interactionErrorMessage(error),
+        flags: 64,
       },
     });
   }
-
-  if (commandName === "gear_link") {
-    return interactionResponse({
-      type: 4,
-      data: {
-        content: `${absoluteUrl(origin, safeNextUrl("/archiv/#editor"))} - hier kannst du dein Gear im Web pflegen.`,
-      },
-    });
-  }
-
-  return interactionResponse({
-    type: 4,
-    data: {
-      content: "Dieser Slash-Command ist in der Cloud-Version noch nicht hinterlegt.",
-      flags: 64,
-    },
-  });
 };

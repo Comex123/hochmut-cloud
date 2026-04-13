@@ -89,6 +89,7 @@ let appCapabilities = {
 };
 let authSession = {
   oauth_ready: false,
+  missing_oauth_fields: [],
   user: null,
   login_url: "/auth/discord?next=%2Farchiv%2F%23editor",
   logout_url: "/auth/logout?next=%2Farchiv%2F%23editor",
@@ -437,6 +438,7 @@ const renderAuthUser = (user) => {
 const applyAuthSession = (data) => {
   authSession = {
     oauth_ready: Boolean(data.oauth_ready),
+    missing_oauth_fields: Array.isArray(data.missing_oauth_fields) ? data.missing_oauth_fields : [],
     user: data.user || null,
     login_url: data.login_url || "/auth/discord?next=%2Farchiv%2F%23editor",
     logout_url: data.logout_url || "/auth/logout?next=%2Farchiv%2F%23editor",
@@ -446,11 +448,14 @@ const applyAuthSession = (data) => {
   discordLogoutLink.href = authSession.logout_url;
 
   if (!authSession.oauth_ready) {
+    const missingFields = authSession.missing_oauth_fields.length
+      ? ` Es fehlen in Cloudflare: ${authSession.missing_oauth_fields.join(", ")}.`
+      : "";
     authStatusLabel.textContent = "Nicht konfiguriert";
     authDescription.textContent =
-      "Discord-Login ist vorbereitet, aber in der .env fehlen noch Client-ID, Client-Secret und Redirect-URI.";
+      `Discord-Login ist im Cloudflare-Projekt noch nicht voll aktiviert.${missingFields}`;
     discordLoginLink.classList.remove("hidden");
-    discordLoginLink.textContent = "Discord Login konfigurieren";
+    discordLoginLink.textContent = "Cloudflare Login-Konfiguration pruefen";
     discordLoginLink.href = "#sync";
     discordLogoutLink.classList.add("hidden");
     loadMyEntryButton.disabled = true;

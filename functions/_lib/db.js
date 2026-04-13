@@ -1,4 +1,17 @@
 import { getPortraitUrl, normalizeLifeSkills } from "./constants.js";
+import { SEED_GEAR_ENTRIES } from "./seed-data.js";
+
+export const ensureDbBinding = (db) => {
+  if (db && typeof db.prepare === "function") {
+    return db;
+  }
+
+  const error = new Error(
+    "Cloudflare D1 ist im Pages-Projekt noch nicht als Binding 'DB' verbunden."
+  );
+  error.code = "missing_db_binding";
+  throw error;
+};
 
 const mapRowToEntry = (row) => {
   if (!row) {
@@ -41,24 +54,7 @@ const mapRowToEntry = (row) => {
   };
 };
 
-export const listEntries = async (db) => {
-  const result = await db
-    .prepare("SELECT * FROM gears ORDER BY gearscore DESC, updated_at DESC")
-    .all();
-  return (result.results || []).map(mapRowToEntry);
-};
-
-export const getGearRecord = async (db, discordId) => {
-  const result = await db
-    .prepare("SELECT * FROM gears WHERE discord_id = ? LIMIT 1")
-    .bind(String(discordId))
-    .first();
-  return result || null;
-};
-
-export const getEntry = async (db, discordId) => mapRowToEntry(await getGearRecord(db, discordId));
-
-export const upsertGear = async (db, payload) => {
+const upsertGearRecord = async (db, payload) => {
   await db
     .prepare(
       `INSERT INTO gears (
@@ -132,5 +128,42 @@ export const upsertGear = async (db, payload) => {
     .run();
 };
 
+const ensureSeedData = async (db) => {
+  const activeDb = ensureDbBinding(db);
+  const countRow = await activeDb.prepare("SELECT COUNT(*) AS count FROM gears").first();
+  const currentCount = Number(countRow?.count || 0);
+
+  if (currentCount > 0) {
+    return activeDb;
+  }
+
+  for (const payload of SEED_GEAR_ENTRIES) {
+    await upsertGearRecord(activeDb, payload);
+  }
+
+  return activeDb;
+};
+
+export const listEntries = async (db) => {
+  const result = await (await ensureSeedData(db))
+    .prepare("SELECT * FROM gears ORDER BY gearscore DESC, updated_at DESC")
+    .all();
+  return (result.results || []).map(mapRowToEntry);
+};
+
+export const getGearRecord = async (db, discordId) => {
+  const result = await (await ensureSeedData(db))
+    .prepare("SELECT * FROM gears WHERE discord_id = ? LIMIT 1")
+    .bind(String(discordId))
+    .first();
+  return result || null;
+};
+
+export const getEntry = async (db, discordId) => mapRowToEntry(await getGearRecord(db, discordId));
+
+export const upsertGear = async (db, payload) => {
+  await upsertGearRecord(ensureDbBinding(db), payload);
+};
+
 export const deleteGear = async (db, discordId) =>
-  db.prepare("DELETE FROM gears WHERE discord_id = ?").bind(String(discordId)).run();
+  ensureDbBinding(db).prepare("DELETE FROM gears WHERE discord_id = ?").bind(String(discordId)).run();
