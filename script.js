@@ -503,7 +503,7 @@ const applyAuthSession = (data) => {
     setText(authStatusLabel, "Nicht konfiguriert");
     setText(
       authDescription,
-      `Discord-Login ist im Cloudflare-Projekt noch nicht voll aktiviert.${missingFields}`;
+      `Discord-Login ist im Cloudflare-Projekt noch nicht voll aktiviert.${missingFields}`
     );
     if (discordLoginLink) {
       discordLoginLink.classList.remove("hidden");
@@ -529,7 +529,7 @@ const applyAuthSession = (data) => {
     setText(authStatusLabel, "Verbunden");
     setText(
       authDescription,
-      "Discord-ID und Name werden jetzt automatisch in den Editor uebernommen. Du musst nur noch deine Gear-Daten pflegen.";
+      "Discord-ID und Name werden jetzt automatisch in den Editor uebernommen. Du musst nur noch deine Gear-Daten pflegen."
     );
     if (discordLoginLink) {
       discordLoginLink.classList.add("hidden");
@@ -549,7 +549,7 @@ const applyAuthSession = (data) => {
     setText(authStatusLabel, "Noch nicht verbunden");
     setText(
       authDescription,
-      "Melde dich mit Discord an, damit ID und Name automatisch aus Discord gezogen werden.";
+      "Melde dich mit Discord an, damit ID und Name automatisch aus Discord gezogen werden."
     );
     if (discordLoginLink) {
       discordLoginLink.classList.remove("hidden");
