@@ -52,6 +52,10 @@ const guildActivityInput = document.querySelector("#guild-activity");
 const energyPointsInput = document.querySelector("#energy-points");
 const contributionPointsInput = document.querySelector("#contribution-points");
 const proofFileInput = document.querySelector("#proof-file");
+const proofDataUrlInput = document.querySelector("#proof-data-url");
+const proofDropzone = document.querySelector("#proof-dropzone");
+const proofDropStatus = document.querySelector("#proof-drop-status");
+const proofUploadHelp = document.querySelector("#proof-upload-help");
 const scanProofButton = document.querySelector("#scan-proof");
 const proofLinkInput = document.querySelector("#proof-link");
 const clearProofInput = document.querySelector("#clear-proof");
@@ -97,6 +101,8 @@ let authSession = {
 };
 
 const authQueryStatus = new URLSearchParams(window.location.search).get("auth");
+const MAX_INLINE_PROOF_BYTES = 380 * 1024;
+const inlineProofPattern = /^data:image\/(?:png|jpeg|jpg|webp);base64,/i;
 
 const setText = (element, value) => {
   if (element) {
@@ -259,6 +265,122 @@ const clearProofPreview = () => {
   setProofPreview("<p>Waehle ein Bild oder lade einen vorhandenen Datensatz.</p>", "Kein Proof geladen");
 };
 
+const resetInlineProofData = () => {
+  if (proofDataUrlInput) {
+    proofDataUrlInput.value = "";
+  }
+};
+
+const setProofDropState = (message) => {
+  setText(proofDropStatus, message);
+};
+
+const syncProofDropState = (entry = null) => {
+  if (!proofDropStatus) {
+    return;
+  }
+
+  const selectedFile = proofFileInput?.files?.[0];
+  if (selectedFile) {
+    setProofDropState(selectedFile.name);
+    return;
+  }
+
+  const inlineValue = proofDataUrlInput?.value?.trim();
+  if (inlineProofPattern.test(inlineValue)) {
+    setProofDropState("Proof-Foto bereit");
+    return;
+  }
+
+  const proofValue = entry?.proof_url || proofLinkInput?.value?.trim();
+  if (proofValue) {
+    setProofDropState(proofValue.startsWith("data:image/") ? "Gespeichertes Proof-Foto" : "Proof-Link gesetzt");
+    return;
+  }
+
+  setProofDropState("Noch kein Bild ausgewaehlt");
+};
+
+const dataUrlByteLength = (value) => {
+  const text = String(value || "");
+  const base64 = text.split(",")[1] || "";
+  return Math.ceil((base64.length * 3) / 4);
+};
+
+const readFileAsOptimizedProof = async (file) => {
+  if (!(file instanceof File) || !file.type.startsWith("image/")) {
+    throw new Error("Bitte ein Bild als PNG, JPG oder WEBP verwenden.");
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("Das Proof-Bild konnte nicht gelesen werden."));
+      element.src = objectUrl;
+    });
+
+    const targetWidths = [1480, 1260, 1040, 900];
+    const qualities = [0.84, 0.76, 0.68, 0.58];
+    let bestCandidate = "";
+
+    for (const maxWidth of targetWidths) {
+      const scale = Math.min(1, maxWidth / Math.max(image.naturalWidth || image.width, 1));
+      const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+      const height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        throw new Error("Der Browser konnte das Proof-Bild nicht vorbereiten.");
+      }
+      context.drawImage(image, 0, 0, width, height);
+
+      for (const quality of qualities) {
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        bestCandidate = dataUrl;
+        if (dataUrlByteLength(dataUrl) <= MAX_INLINE_PROOF_BYTES) {
+          return dataUrl;
+        }
+      }
+    }
+
+    if (bestCandidate && dataUrlByteLength(bestCandidate) <= MAX_INLINE_PROOF_BYTES * 1.35) {
+      return bestCandidate;
+    }
+
+    throw new Error("Das Proof-Bild ist noch zu gross. Bitte einen kleineren Screenshot verwenden.");
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+
+const assignProofFile = (file) => {
+  if (!proofFileInput || !(file instanceof File)) {
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    setFeedback("Bitte nur Bilddateien als Proof hineinziehen.", "error");
+    return;
+  }
+
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  proofFileInput.files = transfer.files;
+  resetInlineProofData();
+  if (proofLinkInput) {
+    proofLinkInput.value = "";
+  }
+  if (clearProofInput) {
+    clearProofInput.checked = false;
+  }
+  handleLocalFilePreview();
+};
+
 const clearScanResult = () => {
   if (!scanResultCard) {
     return;
@@ -383,9 +505,14 @@ const handleLocalFilePreview = () => {
     } else {
       clearProofPreview();
     }
+    syncProofDropState();
     return;
   }
 
+  resetInlineProofData();
+  if (proofLinkInput) {
+    proofLinkInput.value = "";
+  }
   releasePreviewObjectUrl();
   currentPreviewObjectUrl = URL.createObjectURL(file);
   setProofPreview(
@@ -395,6 +522,7 @@ const handleLocalFilePreview = () => {
     </div>`,
     "Lokaler Upload bereit"
   );
+  syncProofDropState();
 };
 
 const formatTimestamp = (value) => {
@@ -884,11 +1012,20 @@ const applyMeta = (meta) => {
 
   if (!appCapabilities.supports_proof_upload) {
     proofFileInput.disabled = true;
-    proofFileInput.removeAttribute("name");
-    const uploadHelp = proofFileInput.closest("label")?.querySelector("small");
-    if (uploadHelp) {
-      uploadHelp.textContent =
-        "In der kostenlosen Cloud-Version bitte einen Proof-Link verwenden. Datei-Uploads bleiben in der lokalen Python-Version.";
+    if (proofDropzone) {
+      proofDropzone.disabled = true;
+      proofDropzone.classList.add("is-disabled");
+    }
+    if (proofUploadHelp) {
+      proofUploadHelp.textContent =
+        "Hier ist nur ein Proof-Link moeglich. Datei-Uploads sind in dieser Version ausgeschaltet.";
+    }
+  } else if (proofDropzone) {
+    proofFileInput.disabled = false;
+    proofDropzone.disabled = false;
+    proofDropzone.classList.remove("is-disabled");
+    if (proofUploadHelp) {
+      proofUploadHelp.textContent = "Zieh dein Proof-Foto einfach hinein oder nutze weiter einen Proof-Link.";
     }
   }
 
@@ -933,6 +1070,7 @@ const hydrateForm = (entry) => {
   contributionPointsInput.value = entry.contribution_points || "";
   fillLifeSkillInputs(entry.life_skills || []);
   proofLinkInput.value = entry.proof?.startsWith("http") ? entry.proof : "";
+  resetInlineProofData();
   clearProofInput.checked = false;
   notesInput.value = entry.notes || "";
   proofFileInput.value = "";
@@ -943,6 +1081,7 @@ const hydrateForm = (entry) => {
   } else {
     clearProofPreview();
   }
+  syncProofDropState(entry);
   clearScanResult();
 };
 
@@ -966,10 +1105,12 @@ const clearFormToDefaults = () => {
   fillLifeSkillInputs();
   proofFileInput.value = "";
   proofLinkInput.value = "";
+  resetInlineProofData();
   clearProofInput.checked = false;
   notesInput.value = "";
   updateLiveGearscore();
   clearProofPreview();
+  syncProofDropState();
   clearScanResult();
   setDiscordIdentityFields();
   setFeedback("Noch nichts gespeichert.");
@@ -1133,17 +1274,20 @@ const saveEntry = async (event) => {
     return;
   }
 
-  if (!appCapabilities.supports_proof_upload && proofFileInput.files?.length) {
-    setFeedback(
-      "In der Cloud-Version bitte einen Proof-Link eintragen. Datei-Uploads bleiben in der lokalen Python-Version.",
-      "error"
-    );
-    return;
-  }
-
   const formData = new FormData(form);
 
   try {
+    const selectedProofFile = proofFileInput?.files?.[0];
+    if (selectedProofFile) {
+      setFeedback("Proof-Bild wird vorbereitet...", "info");
+      const inlineProofData = await readFileAsOptimizedProof(selectedProofFile);
+      formData.delete("proof_file");
+      formData.set("proof_data_url", inlineProofData);
+      if (proofDataUrlInput) {
+        proofDataUrlInput.value = inlineProofData;
+      }
+    }
+
     const data = await fetchJson("/api/gears", {
       method: "POST",
       body: formData,
@@ -1233,13 +1377,60 @@ if (proofFileInput) {
 
 if (proofLinkInput) {
   proofLinkInput.addEventListener("input", () => {
-    if (!proofFileInput?.files?.length && proofLinkInput.value.trim()) {
+    if (proofLinkInput.value.trim()) {
+      if (proofFileInput) {
+        proofFileInput.value = "";
+      }
+      resetInlineProofData();
       clearScanResult();
       setProofPreviewFromUrl(proofLinkInput.value.trim(), "Proof-Link gesetzt");
+      syncProofDropState();
     } else if (!proofFileInput?.files?.length) {
       clearProofPreview();
       clearScanResult();
+      syncProofDropState();
     }
+  });
+}
+
+if (proofDropzone && proofFileInput) {
+  proofDropzone.addEventListener("click", () => {
+    if (!proofFileInput.disabled) {
+      proofFileInput.click();
+    }
+  });
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    proofDropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!proofFileInput.disabled) {
+        proofDropzone.classList.add("is-dragover");
+      }
+    });
+  });
+
+  ["dragleave", "dragend"].forEach((eventName) => {
+    proofDropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      proofDropzone.classList.remove("is-dragover");
+    });
+  });
+
+  proofDropzone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    proofDropzone.classList.remove("is-dragover");
+    if (proofFileInput.disabled) {
+      return;
+    }
+    const droppedFile = Array.from(event.dataTransfer?.files || []).find((file) => file.type.startsWith("image/"));
+    if (!droppedFile) {
+      setFeedback("Bitte ein Bild als Proof in die Drop-Zone ziehen.", "error");
+      return;
+    }
+    assignProofFile(droppedFile);
   });
 }
 
@@ -1268,6 +1459,7 @@ if (form) {
 document.addEventListener("DOMContentLoaded", async () => {
   updateLiveGearscore();
   clearProofPreview();
+  syncProofDropState();
   clearScanResult();
 
   try {

@@ -9,6 +9,7 @@ import { absoluteUrl } from "./http.js";
 import { getEntry, listEntries } from "./db.js";
 
 const encoder = new TextEncoder();
+const isPublicHttpUrl = (value) => /^https?:\/\//i.test(String(value || "").trim());
 
 const hexToBytes = (value) =>
   Uint8Array.from((value || "").match(/.{1,2}/g) || [], (pair) => Number.parseInt(pair, 16));
@@ -172,7 +173,7 @@ const buildGearEmbed = (entry, origin) => {
     embed.thumbnail = { url: thumbnailUrl };
   }
 
-  if (entry.proof_url) {
+  if (isPublicHttpUrl(entry.proof_url)) {
     embed.image = { url: entry.proof_url };
   }
 

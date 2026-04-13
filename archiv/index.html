@@ -71,7 +71,7 @@
               <span id="proof-preview-label">Kein Proof geladen</span>
             </div>
             <div class="proof-preview-body" id="proof-preview-body">
-              <p>Wenn du einen Proof-Link setzt, erscheint er hier.</p>
+              <p>Zieh ein Bild hinein oder setze einen Proof-Link. Dann erscheint es hier.</p>
             </div>
           </div>
         </div>
@@ -223,11 +223,27 @@
                     </div>
                   </div>
 
-                  <label class="full-width upload-shell">
-                    <span>Proof Upload</span>
-                    <input id="proof-file" name="proof_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled>
-                    <small>In der Cloud-Version bitte nur den Proof-Link nutzen.</small>
-                  </label>
+                  <div class="full-width upload-shell">
+                    <div class="upload-shell-head">
+                      <strong>Proof Foto</strong>
+                      <span id="proof-drop-status">Noch kein Bild ausgewaehlt</span>
+                    </div>
+                    <input
+                      id="proof-file"
+                      name="proof_file"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      class="visually-hidden"
+                    >
+                    <input id="proof-data-url" name="proof_data_url" type="hidden">
+                    <button class="proof-dropzone" id="proof-dropzone" type="button">
+                      <strong>Bild hier hineinziehen</strong>
+                      <span>oder klicken und deinen Screenshot auswaehlen</span>
+                    </button>
+                    <small id="proof-upload-help">
+                      PNG, JPG oder WEBP. Alternativ kannst du weiter einen Proof-Link nutzen.
+                    </small>
+                  </div>
 
                   <div class="full-width scan-shell">
                     <div class="scan-shell-copy">

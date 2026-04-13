@@ -8,7 +8,7 @@ export const onRequestGet = async ({ env }) =>
     states: VALID_STATES,
     classes: BDO_CLASSES,
     data_file_label: "Cloudflare D1",
-    proofs_dir_label: "Proof-Link statt Datei-Upload",
-    supports_proof_upload: false,
+    proofs_dir_label: "Drag-and-Drop oder Proof-Link",
+    supports_proof_upload: true,
     supports_scan: false,
   });

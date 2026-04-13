@@ -17,6 +17,8 @@ const publicDbError = (error) =>
     ? "Cloudflare D1 ist im Pages-Projekt noch nicht als Binding 'DB' verbunden. Bitte unter Einstellungen > Bindungen die D1-Datenbank an 'DB' binden und neu bereitstellen."
     : "Die Geardaten konnten gerade nicht geladen werden.";
 
+const isInlineProofDataUrl = (value) => /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(String(value || "").trim());
+
 export const onRequestGet = async ({ env }) => {
   try {
     const items = await listEntries(env.DB);
@@ -34,9 +36,10 @@ export const onRequestPost = async ({ request, env }) => {
 
   const formData = await request.formData();
   const proofFile = formData.get("proof_file");
-  if (proofFile instanceof File && proofFile.size > 0) {
+  const proofDataUrl = cleanText(formData.get("proof_data_url"));
+  if (proofFile instanceof File && proofFile.size > 0 && !proofDataUrl) {
     return jsonError(
-      "In der kostenlosen Cloud-Version bitte einen Proof-Link verwenden. Datei-Uploads bleiben in der lokalen Python-Version.",
+      "Das Proof-Bild konnte nicht vorbereitet werden. Bitte das Bild erneut hineinziehen oder neu auswaehlen.",
       422
     );
   }
@@ -60,6 +63,14 @@ export const onRequestPost = async ({ request, env }) => {
     return jsonError("Proof-Link muss mit http:// oder https:// beginnen.");
   }
 
+  if (proofDataUrl && !isInlineProofDataUrl(proofDataUrl)) {
+    return jsonError("Das Proof-Bild hat kein unterstuetztes Format.");
+  }
+
+  if (proofDataUrl.length > 600000) {
+    return jsonError("Das Proof-Bild ist fuer die Cloud-Version noch zu gross. Bitte einen kleineren Screenshot verwenden.");
+  }
+
   let state;
   let ap;
   let aap;
@@ -78,7 +89,7 @@ export const onRequestPost = async ({ request, env }) => {
     return jsonError(error.message);
   }
 
-  const proofUrl = clearProof ? "" : proofLink || existing?.proof_url || "";
+  const proofUrl = clearProof ? "" : proofLink || proofDataUrl || existing?.proof_url || "";
   const payload = {
     discord_id: discordId,
     discord_name: cleanText(sessionUser.display_name || sessionUser.username),
