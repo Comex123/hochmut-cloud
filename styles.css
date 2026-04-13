@@ -1,19 +1,19 @@
 :root {
-  --bg: #f4f1eb;
-  --panel: #ffffff;
-  --panel-soft: #fbf9f5;
-  --panel-muted: #f0ebe3;
-  --line: #e6ddd2;
-  --line-strong: #d7cbbb;
-  --text: #181614;
-  --text-soft: #635c55;
-  --text-faint: #8b8177;
-  --accent: #7a4d32;
-  --accent-strong: #5e3923;
-  --accent-soft: #f0e2d4;
-  --success: #2f7a57;
-  --danger: #b55757;
-  --shadow: 0 16px 40px rgba(36, 28, 20, 0.07);
+  --bg: #11100f;
+  --panel: #191715;
+  --panel-soft: #211d1a;
+  --panel-muted: #2a2521;
+  --line: #322a25;
+  --line-strong: #4b3d32;
+  --text: #f3ede5;
+  --text-soft: #c8b8a7;
+  --text-faint: #9e8f82;
+  --accent: #c28855;
+  --accent-strong: #9f693d;
+  --accent-soft: #34261d;
+  --success: #56b885;
+  --danger: #d06f6f;
+  --shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
   --radius-xl: 28px;
   --radius-lg: 20px;
   --radius-md: 16px;
@@ -35,8 +35,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(122, 77, 50, 0.08), transparent 26%),
-    linear-gradient(180deg, #f7f4ef 0%, #f1ece4 100%);
+    radial-gradient(circle at top left, rgba(194, 136, 85, 0.12), transparent 24%),
+    radial-gradient(circle at top right, rgba(194, 136, 85, 0.06), transparent 22%),
+    linear-gradient(180deg, #171412 0%, #100f0e 100%);
   color: var(--text);
   font-family: "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
   line-height: 1.55;
@@ -66,8 +67,8 @@ button {
 code {
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
-  background: #f1e8de;
-  color: var(--accent-strong);
+  background: #2a211b;
+  color: #efc79f;
 }
 
 .app-shell {
@@ -87,7 +88,7 @@ code {
   padding: 14px 18px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(20, 18, 17, 0.88);
   backdrop-filter: blur(14px);
   box-shadow: var(--shadow);
 }
@@ -106,7 +107,7 @@ code {
   height: 44px;
   border-radius: 14px;
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #fff;
+  color: #140f0b;
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -319,8 +320,8 @@ h3 {
 
 .table-pill {
   border: 1px solid var(--line);
-  background: #fff;
-  color: var(--accent-strong);
+  background: #181513;
+  color: #efc79f;
 }
 
 .table-pill.is-muted {
@@ -343,7 +344,7 @@ h3 {
   border-radius: 14px;
   object-fit: cover;
   border: 1px solid var(--line);
-  background: #efe7dc;
+  background: #2b241f;
 }
 
 .overview-player-portrait-fallback,
@@ -392,19 +393,19 @@ h3 {
 
 .button-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #fff;
+  color: #140f0b;
 }
 
 .button-secondary {
   border-color: var(--line);
-  background: #fff;
+  background: #181513;
   color: var(--text);
 }
 
 .button-danger {
-  border-color: #e8caca;
-  background: #fff5f5;
-  color: #8f4747;
+  border-color: #5a3333;
+  background: #2a1717;
+  color: #f0b6b6;
 }
 
 .button:disabled {
@@ -557,7 +558,7 @@ h3 {
   padding: 0.9rem 0.95rem;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: #141210;
   color: var(--text);
 }
 
@@ -570,12 +571,12 @@ h3 {
 .form-grid select:focus,
 .form-grid textarea:focus {
   outline: none;
-  border-color: #c8b39c;
-  box-shadow: 0 0 0 4px rgba(122, 77, 50, 0.08);
+  border-color: #7f5a3a;
+  box-shadow: 0 0 0 4px rgba(194, 136, 85, 0.12);
 }
 
 .locked-field input {
-  background: #f2ede7;
+  background: #221d19;
 }
 
 .full-width {
@@ -615,7 +616,7 @@ h3 {
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fff;
+  background: #161311;
 }
 
 .form-section-copy {
