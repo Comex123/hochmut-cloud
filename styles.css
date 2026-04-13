@@ -219,6 +219,10 @@ main {
   align-items: start;
 }
 
+.hero-single {
+  grid-template-columns: 1fr;
+}
+
 .menu-hero-copy,
 .hero-copy,
 .menu-hero-panel,
@@ -917,6 +921,80 @@ h3 {
   background: linear-gradient(135deg, #f5ede4, #e9ddd1);
 }
 
+.overview-list {
+  display: grid;
+  gap: 14px;
+}
+
+.overview-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--shadow-card);
+}
+
+.overview-row-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: rgba(125, 75, 67, 0.1);
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.overview-row-main {
+  min-width: 0;
+}
+
+.overview-row-main strong,
+.overview-row-main span {
+  display: block;
+}
+
+.overview-row-main span {
+  color: var(--text-soft);
+  font-size: 0.94rem;
+}
+
+.overview-row-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  text-align: right;
+  color: var(--text-soft);
+}
+
+.overview-row-stats strong {
+  color: var(--text);
+}
+
+.overview-row-portrait,
+.overview-row-portrait-fallback {
+  width: 62px;
+  height: 62px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #f5ede4, #e9ddd1);
+}
+
+.overview-row-portrait-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--accent-strong);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
 .editor-layout {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
@@ -1295,6 +1373,15 @@ h3 {
   .leader-portrait-fallback {
     width: 160px;
   }
+
+  .overview-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .overview-row-portrait,
+  .overview-row-portrait-fallback {
+    display: none;
+  }
 }
 
 @media (max-width: 860px) {
@@ -1365,6 +1452,16 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .overview-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .overview-row-stats {
+    align-items: flex-start;
+    text-align: left;
+  }
+
   .discord-embed-head,
   .scan-shell,
   .form-actions,
@@ -1422,6 +1519,10 @@ h3 {
   .mini-entry-thumb,
   .mini-entry-thumb-fallback {
     display: none;
+  }
+
+  .overview-row {
+    padding: 16px;
   }
 
   .discord-embed-portrait,

@@ -14,13 +14,25 @@ const statUpdated = document.querySelector("#menu-stat-updated");
 const topEntry = document.querySelector("#menu-top-entry");
 const proofCount = document.querySelector("#menu-proof-count");
 const discordStatus = document.querySelector("#menu-discord-status");
-const topPreview = document.querySelector("#menu-top-preview");
-const discordPreview = document.querySelector("#menu-discord-preview");
-const discordCta = document.querySelector("#menu-discord-cta");
 const authStatus = document.querySelector("#menu-auth-status");
 const authAction = document.querySelector("#menu-auth-action");
 const focusTitle = document.querySelector("#menu-focus-title");
 const focusCopy = document.querySelector("#menu-focus-copy");
+const overviewList = document.querySelector("#menu-leaderboard-grid");
+
+const setText = (element, value) => {
+  if (element) {
+    element.textContent = value;
+  }
+};
+
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 
 const formatTimestamp = (value) => {
   if (!value) {
@@ -57,20 +69,54 @@ const applyMeta = (meta) => {
   });
 
   if (meta.discord_invite) {
-    discordCta.href = meta.discord_invite;
-    discordCta.target = "_blank";
-    discordCta.rel = "noreferrer";
-    discordCta.textContent = "Discord oeffnen";
-    discordStatus.textContent = "Verbunden";
-    discordPreview.textContent = "Invite ist gesetzt";
+    setText(discordStatus, "Verbunden");
   } else {
-    discordCta.href = "/archiv/#sync";
-    discordCta.removeAttribute("target");
-    discordCta.removeAttribute("rel");
-    discordCta.textContent = "Discord einrichten";
-    discordStatus.textContent = "Noch offen";
-    discordPreview.textContent = "Invite noch nicht gesetzt";
+    setText(discordStatus, "Noch offen");
   }
+};
+
+const renderOverview = (items) => {
+  if (!overviewList) {
+    return;
+  }
+
+  const entries = items || [];
+
+  if (!entries.length) {
+    overviewList.innerHTML = `
+      <article class="overview-row">
+        <div class="overview-row-main">
+          <strong>Noch keine Gear-Eintraege vorhanden.</strong>
+          <span>Der erste Eintrag kann direkt ueber den Gear-Button angelegt werden.</span>
+        </div>
+      </article>
+    `;
+    return;
+  }
+
+  overviewList.innerHTML = entries
+    .map((entry, index) => {
+      const displayName = entry.familyname || entry.discord_name || entry.discord_id;
+      const portrait = entry.portrait_url
+        ? `<img class="overview-row-portrait" src="${escapeHtml(entry.portrait_url)}" alt="${escapeHtml(entry.class || "Klasse")}">`
+        : `<span class="overview-row-portrait overview-row-portrait-fallback">${escapeHtml((entry.class || "?").charAt(0))}</span>`;
+
+      return `
+        <article class="overview-row">
+          <div class="overview-row-rank">#${index + 1}</div>
+          <div class="overview-row-main">
+            <strong>${escapeHtml(displayName)}</strong>
+            <span>${escapeHtml(entry.class || "-")} | ${escapeHtml(entry.state || "-")} | Aktualisiert ${escapeHtml(formatTimestamp(entry.updated_at))}</span>
+          </div>
+          <div class="overview-row-stats">
+            <span>AP/AAP ${escapeHtml(entry.ap)} / ${escapeHtml(entry.aap)}</span>
+            <strong>DP ${escapeHtml(entry.dp)} | GS ${escapeHtml(entry.gearscore)}</strong>
+          </div>
+          ${portrait}
+        </article>
+      `;
+    })
+    .join("");
 };
 
 const applyEntries = (items) => {
@@ -81,40 +127,47 @@ const applyEntries = (items) => {
   const featured = entries[0];
   const proofs = entries.filter((entry) => entry.proof_url).length;
 
-  statCount.textContent = String(entries.length);
-  statTopScore.textContent = featured ? String(featured.gearscore) : "0";
-  statUpdated.textContent = newest ? formatTimestamp(newest.updated_at) : "-";
-  proofCount.textContent = String(proofs);
+  setText(statCount, String(entries.length));
+  setText(statTopScore, featured ? String(featured.gearscore) : "0");
+  setText(statUpdated, newest ? formatTimestamp(newest.updated_at) : "-");
+  setText(proofCount, String(proofs));
 
   if (featured) {
     const displayName = featured.familyname || featured.discord_name || featured.discord_id;
-    topEntry.textContent = `${displayName} | GS ${featured.gearscore}`;
-    topPreview.textContent = `${displayName} fuehrt aktuell`;
-    focusTitle.textContent = "Archiv mit Live-Daten";
-    focusCopy.textContent =
-      "Rangliste und Editor greifen auf dieselben Daten wie der Discord-Bot zu.";
+    setText(topEntry, `${displayName} | GS ${featured.gearscore}`);
+    setText(focusTitle, "Aktuelle Gildenlage");
+    setText(focusCopy, "Die Gearliste ist live und nach Gearscore sortiert.");
   } else {
-    topEntry.textContent = "Noch kein Eintrag";
-    topPreview.textContent = "Noch keine Daten im Archiv";
+    setText(topEntry, "Noch kein Eintrag");
+    setText(focusTitle, "Archiv bereit");
+    setText(focusCopy, "Sobald Eintraege gespeichert sind, erscheinen sie hier.");
   }
+
+  renderOverview(entries);
 };
 
 const applySession = (session) => {
   if (!session.oauth_ready) {
-    authStatus.textContent = "Discord Login offen";
-    authAction.href = "/archiv/#sync";
-    authAction.textContent = "Discord einrichten";
+    setText(authStatus, "Discord Login offen");
+    if (authAction) {
+      authAction.href = "/archiv/#editor";
+      authAction.textContent = "Discord spaeter verbinden";
+    }
     return;
   }
 
   if (session.user) {
-    authStatus.textContent = "Discord verbunden";
-    authAction.href = "/archiv/#editor";
-    authAction.textContent = `Weiter als ${session.user.display_name || session.user.username}`;
+    setText(authStatus, "Discord verbunden");
+    if (authAction) {
+      authAction.href = "/archiv/#editor";
+      authAction.textContent = "Meinen Eintrag oeffnen";
+    }
   } else {
-    authStatus.textContent = "Bereit fuer Login";
-    authAction.href = session.login_url || "/auth/discord?next=%2Farchiv%2F%23editor";
-    authAction.textContent = "Mit Discord anmelden";
+    setText(authStatus, "Bereit fuer Login");
+    if (authAction) {
+      authAction.href = session.login_url || "/auth/discord?next=%2Farchiv%2F%23editor";
+      authAction.textContent = "Mit Discord anmelden";
+    }
   }
 };
 
@@ -167,7 +220,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     applyEntries(gears.items || []);
     applySession(session);
   } catch (error) {
-    focusTitle.textContent = "Menue bereit";
-    focusCopy.textContent = error.message;
+    setText(focusTitle, "Uebersicht bereit");
+    setText(focusCopy, error.message);
   }
 });

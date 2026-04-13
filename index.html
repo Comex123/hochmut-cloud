@@ -33,28 +33,25 @@
       </button>
 
       <nav class="site-nav" id="main-nav" aria-label="Hauptnavigation">
-        <a href="/archiv/">Archiv</a>
         <a href="/archiv/#leaderboard">Rangliste</a>
-        <a href="/archiv/#editor">Editor</a>
-        <a href="/archiv/#sync">Discord</a>
+        <a href="/archiv/#editor">Gear eintragen</a>
       </nav>
     </header>
 
     <main class="menu-main">
-      <section class="menu-hero">
+      <section class="menu-hero compact-hero">
         <div class="menu-hero-copy reveal">
-          <span class="hero-ribbon">Start</span>
-          <p class="eyebrow">HOCHMUT | GILDENARCHIV</p>
-          <h1>Alles Wichtige an einem ruhigen Ort.</h1>
+          <span class="hero-ribbon">Hochmut</span>
+          <p class="eyebrow">GILDENUEBERSICHT</p>
+          <h1>Gearliste der Gilde auf einen Blick.</h1>
           <p class="lead">
-            Von hier kommen Mitglieder direkt zur Rangliste, zum Editor und zur
-            Discord-Anbindung, ohne lange zu suchen oder durch Unterseiten zu springen.
+            Mehr braucht es erstmal nicht: die aktuelle Rangliste ansehen, sich mit
+            Discord anmelden und den eigenen Eintrag oeffnen.
           </p>
 
           <div class="hero-actions">
             <a class="button button-primary" href="/archiv/#editor">Gear eintragen</a>
-            <a class="button button-secondary" href="/archiv/#leaderboard">Rangliste ansehen</a>
-            <a class="button button-ghost" id="menu-discord-cta" href="/archiv/#sync">Discord oeffnen</a>
+            <a class="button button-secondary" id="menu-auth-action" href="/auth/discord?next=%2Farchiv%23editor">Mit Discord anmelden</a>
           </div>
 
           <div class="hero-metrics menu-metrics">
@@ -76,12 +73,12 @@
         <aside class="menu-hero-panel reveal">
           <div class="menu-focus-card">
             <div class="menu-focus-head">
-              <span class="status-pill">Live Uebersicht</span>
-              <span class="menu-focus-status" id="menu-auth-status">Archiv bereit</span>
+              <span class="status-pill">Kurzstatus</span>
+              <span class="menu-focus-status" id="menu-auth-status">Wird geladen</span>
             </div>
-            <h2 id="menu-focus-title">Schneller Einstieg fuer alle</h2>
+            <h2 id="menu-focus-title">Aktuelle Gildenlage</h2>
             <p id="menu-focus-copy">
-              Rangliste oeffnen, eigenes Gear pflegen und direkt mit Discord verknuepfen.
+              Die wichtigsten Werte werden direkt aus dem Archiv geladen.
             </p>
             <dl class="menu-focus-list">
               <div>
@@ -94,78 +91,23 @@
               </div>
               <div>
                 <dt>Discord</dt>
-                <dd id="menu-discord-status">Noch offen</dd>
+                <dd id="menu-discord-status">Wird geprueft</dd>
               </div>
             </dl>
-            <a class="button button-secondary" id="menu-auth-action" href="/archiv#editor">Zum Editor</a>
           </div>
         </aside>
       </section>
 
-      <section class="section menu-section">
+      <section class="section menu-section" id="menu-overview">
         <div class="section-heading reveal">
-          <p class="eyebrow">SCHNELLE BEREICHE</p>
-          <h2>Vier klare Wege statt unruhiger Menues.</h2>
+          <p class="eyebrow">GEARLISTE</p>
+          <h2>Die komplette Uebersicht der Gilde.</h2>
           <p class="section-intro">
-            Jeder Bereich hat genau eine Aufgabe. Das haelt die Seite ruhig,
-            verstaendlich und schnell fuer neue Mitglieder.
+            Sortiert nach Gearscore und direkt lesbar, ohne zusaetzliche Bereiche.
           </p>
         </div>
 
-        <div class="hub-grid">
-          <a class="hub-card reveal" href="/archiv/#editor">
-            <span class="hub-kicker">01</span>
-            <h3>Gear eintragen</h3>
-            <p>Discord verbinden, Werte eintragen und einen Proof-Link speichern.</p>
-            <strong>Sofort zum Formular</strong>
-          </a>
-
-          <a class="hub-card reveal" href="/archiv/#leaderboard">
-            <span class="hub-kicker">02</span>
-            <h3>Rangliste</h3>
-            <p>Alle Mitglieder mit Gearscore, Proof und Klasse auf einen Blick.</p>
-            <strong id="menu-top-preview">Top Eintrag wird geladen...</strong>
-          </a>
-
-          <a class="hub-card reveal" href="/archiv/#sync">
-            <span class="hub-kicker">03</span>
-            <h3>Discord & Sync</h3>
-            <p>Discord und Website greifen auf denselben Stand zu und bleiben damit sauber synchron.</p>
-            <strong id="menu-discord-preview">Discord Status wird geladen...</strong>
-          </a>
-
-          <a class="hub-card reveal" href="/archiv/">
-            <span class="hub-kicker">04</span>
-            <h3>Archiv oeffnen</h3>
-            <p>Die komplette Cloud-Arbeitsseite mit Rangliste, Editor und Sync-Bereich.</p>
-            <strong>Zum Gildenarchiv</strong>
-          </a>
-        </div>
-      </section>
-
-      <section class="section menu-section">
-        <div class="section-heading reveal">
-          <p class="eyebrow">ABLAUF</p>
-          <h2>So funktioniert die Seite im Alltag.</h2>
-        </div>
-
-        <div class="process-grid">
-          <article class="process-card reveal">
-            <span class="feature-kicker">Schritt 1</span>
-            <h3>Mit Discord anmelden</h3>
-            <p>Discord-ID und Name werden automatisch uebernommen.</p>
-          </article>
-          <article class="process-card reveal">
-            <span class="feature-kicker">Schritt 2</span>
-            <h3>Proof-Link setzen</h3>
-            <p>In der Cloud-Version wird der Nachweis ueber einen Bild-Link hinterlegt.</p>
-          </article>
-          <article class="process-card reveal">
-            <span class="feature-kicker">Schritt 3</span>
-            <h3>Speichern und fertig</h3>
-            <p>Der Eintrag bleibt sofort mit Website und Discord-App synchron.</p>
-          </article>
-        </div>
+        <div class="overview-list reveal" id="menu-leaderboard-grid"></div>
       </section>
     </main>
 

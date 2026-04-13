@@ -32,6 +32,7 @@ const authDescription = document.querySelector("#auth-description");
 const authUser = document.querySelector("#auth-user");
 const discordLoginLink = document.querySelector("#discord-login-link");
 const discordLogoutLink = document.querySelector("#discord-logout-link");
+const heroLoginLink = document.querySelector("#hero-login-link");
 const loadMyEntryButton = document.querySelector("#load-my-entry");
 const discordIdInput = document.querySelector("#discord-id");
 const discordIdHelp = document.querySelector("#discord-id-help");
@@ -96,6 +97,12 @@ let authSession = {
 };
 
 const authQueryStatus = new URLSearchParams(window.location.search).get("auth");
+
+const setText = (element, value) => {
+  if (element) {
+    element.textContent = value;
+  }
+};
 
 const getDisplayName = (entry) => entry.familyname || entry.discord_name || entry.discord_id;
 
@@ -207,10 +214,15 @@ const calculateGearscore = () => {
 };
 
 const updateLiveGearscore = () => {
-  liveGearscore.textContent = `Gearscore: ${calculateGearscore()}`;
+  if (liveGearscore) {
+    liveGearscore.textContent = `Gearscore: ${calculateGearscore()}`;
+  }
 };
 
 const setFeedback = (message, tone = "") => {
+  if (!formFeedback) {
+    return;
+  }
   formFeedback.textContent = message;
   formFeedback.classList.remove("success", "error");
   if (tone) {
@@ -219,10 +231,12 @@ const setFeedback = (message, tone = "") => {
 };
 
 const setEditorMode = (title, text, loadedId = "") => {
-  editorModeTitle.textContent = title;
-  editorModeText.textContent = text;
+  setText(editorModeTitle, title);
+  setText(editorModeText, text);
   currentLoadedId = loadedId;
-  deleteEntryButton.disabled = !loadedId;
+  if (deleteEntryButton) {
+    deleteEntryButton.disabled = !loadedId;
+  }
 };
 
 const releasePreviewObjectUrl = () => {
@@ -233,6 +247,9 @@ const releasePreviewObjectUrl = () => {
 };
 
 const setProofPreview = (content, label) => {
+  if (!proofPreviewLabel || !proofPreviewBody) {
+    return;
+  }
   proofPreviewLabel.textContent = label;
   proofPreviewBody.innerHTML = content;
 };
@@ -243,17 +260,27 @@ const clearProofPreview = () => {
 };
 
 const clearScanResult = () => {
+  if (!scanResultCard) {
+    return;
+  }
   scanResultCard.classList.add("hidden");
-  scanResultTitle.textContent = "Noch kein Foto gelesen";
-  scanResultCopy.textContent = "Lade einen Screenshot hoch und lies die Werte direkt ins Formular ein.";
-  scanConfidence.textContent = "-";
-  scanStatRow.innerHTML = "";
-  scanMeta.textContent = "";
-  scanWarning.textContent = "";
-  scanWarning.classList.add("hidden");
+  setText(scanResultTitle, "Noch kein Foto gelesen");
+  setText(scanResultCopy, "Lade einen Screenshot hoch und lies die Werte direkt ins Formular ein.");
+  setText(scanConfidence, "-");
+  if (scanStatRow) {
+    scanStatRow.innerHTML = "";
+  }
+  setText(scanMeta, "");
+  setText(scanWarning, "");
+  if (scanWarning) {
+    scanWarning.classList.add("hidden");
+  }
 };
 
 const renderScanResult = (result, message) => {
+  if (!scanResultCard || !scanStatRow) {
+    return;
+  }
   const items = [
     ["AP", result.ap],
     ["AAP", result.aap],
@@ -274,10 +301,11 @@ const renderScanResult = (result, message) => {
   };
 
   scanResultCard.classList.remove("hidden");
-  scanResultTitle.textContent = result.complete ? "Werte uebernommen" : "Teilweise erkannt";
-  scanResultCopy.textContent = message;
-  scanConfidence.textContent = confidenceLabels[result.confidence] || "bitte pruefen";
-  scanStatRow.innerHTML = items
+  setText(scanResultTitle, result.complete ? "Werte uebernommen" : "Teilweise erkannt");
+  setText(scanResultCopy, message);
+  setText(scanConfidence, confidenceLabels[result.confidence] || "bitte pruefen");
+  if (scanStatRow) {
+    scanStatRow.innerHTML = items
     .map(
       ([label, value]) => `
         <div class="scan-stat-chip">
@@ -287,6 +315,7 @@ const renderScanResult = (result, message) => {
       `
     )
     .join("");
+  }
 
   const skillChips = normalizeLifeSkills(result.life_skills).map((skill) => [
     skill.name,
@@ -295,7 +324,7 @@ const renderScanResult = (result, message) => {
       .join(" | "),
   ]);
 
-  if (skillChips.length) {
+  if (skillChips.length && scanStatRow) {
     scanStatRow.innerHTML += skillChips
       .map(
         ([label, value]) => `
@@ -308,16 +337,23 @@ const renderScanResult = (result, message) => {
       .join("");
   }
 
-  scanMeta.textContent = result.recognized_text
+  setText(
+    scanMeta,
+    result.recognized_text
     ? `Erkannter Text: ${truncateText(result.recognized_text)}`
-    : "Kein Zusatztext erkannt.";
+    : "Kein Zusatztext erkannt."
+  );
 
   if (result.warnings?.length) {
-    scanWarning.textContent = result.warnings.join(" ");
-    scanWarning.classList.remove("hidden");
+    setText(scanWarning, result.warnings.join(" "));
+    if (scanWarning) {
+      scanWarning.classList.remove("hidden");
+    }
   } else {
-    scanWarning.textContent = "";
-    scanWarning.classList.add("hidden");
+    setText(scanWarning, "");
+    if (scanWarning) {
+      scanWarning.classList.add("hidden");
+    }
   }
 };
 
@@ -391,6 +427,9 @@ const currentAuthUser = () => authSession.user || null;
 const didReturnFromDiscordLogin = () => authQueryStatus === "connected";
 
 const setDiscordIdentityFields = () => {
+  if (!discordIdInput || !discordNameInput) {
+    return;
+  }
   const user = currentAuthUser();
   const isLocked = Boolean(user);
 
@@ -414,6 +453,9 @@ const setDiscordIdentityFields = () => {
 };
 
 const renderAuthUser = (user) => {
+  if (!authUser) {
+    return;
+  }
   if (!user) {
     authUser.classList.add("hidden");
     authUser.innerHTML = "";
@@ -444,42 +486,85 @@ const applyAuthSession = (data) => {
     logout_url: data.logout_url || "/auth/logout?next=%2Farchiv%2F%23editor",
   };
 
-  discordLoginLink.href = authSession.login_url;
-  discordLogoutLink.href = authSession.logout_url;
+  if (discordLoginLink) {
+    discordLoginLink.href = authSession.login_url;
+  }
+  if (discordLogoutLink) {
+    discordLogoutLink.href = authSession.logout_url;
+  }
+  if (heroLoginLink) {
+    heroLoginLink.href = authSession.login_url;
+  }
 
   if (!authSession.oauth_ready) {
     const missingFields = authSession.missing_oauth_fields.length
       ? ` Es fehlen in Cloudflare: ${authSession.missing_oauth_fields.join(", ")}.`
       : "";
-    authStatusLabel.textContent = "Nicht konfiguriert";
-    authDescription.textContent =
+    setText(authStatusLabel, "Nicht konfiguriert");
+    setText(
+      authDescription,
       `Discord-Login ist im Cloudflare-Projekt noch nicht voll aktiviert.${missingFields}`;
-    discordLoginLink.classList.remove("hidden");
-    discordLoginLink.textContent = "Cloudflare Login-Konfiguration pruefen";
-    discordLoginLink.href = "#sync";
-    discordLogoutLink.classList.add("hidden");
-    loadMyEntryButton.disabled = true;
+    );
+    if (discordLoginLink) {
+      discordLoginLink.classList.remove("hidden");
+      discordLoginLink.textContent = "Cloudflare Login-Konfiguration pruefen";
+      discordLoginLink.href = "#editor";
+    }
+    if (discordLogoutLink) {
+      discordLogoutLink.classList.add("hidden");
+    }
+    if (loadMyEntryButton) {
+      loadMyEntryButton.disabled = true;
+    }
+    if (heroLoginLink) {
+      heroLoginLink.textContent = "Discord spaeter verbinden";
+      heroLoginLink.href = "#editor";
+    }
     renderAuthUser(null);
     setDiscordIdentityFields();
     return;
   }
 
   if (authSession.user) {
-    authStatusLabel.textContent = "Verbunden";
-    authDescription.textContent =
+    setText(authStatusLabel, "Verbunden");
+    setText(
+      authDescription,
       "Discord-ID und Name werden jetzt automatisch in den Editor uebernommen. Du musst nur noch deine Gear-Daten pflegen.";
-    discordLoginLink.classList.add("hidden");
-    discordLogoutLink.classList.remove("hidden");
-    loadMyEntryButton.disabled = false;
+    );
+    if (discordLoginLink) {
+      discordLoginLink.classList.add("hidden");
+    }
+    if (discordLogoutLink) {
+      discordLogoutLink.classList.remove("hidden");
+    }
+    if (loadMyEntryButton) {
+      loadMyEntryButton.disabled = false;
+    }
+    if (heroLoginLink) {
+      heroLoginLink.textContent = "Meinen Eintrag oeffnen";
+      heroLoginLink.href = "#editor";
+    }
     renderAuthUser(authSession.user);
   } else {
-    authStatusLabel.textContent = "Noch nicht verbunden";
-    authDescription.textContent =
+    setText(authStatusLabel, "Noch nicht verbunden");
+    setText(
+      authDescription,
       "Melde dich mit Discord an, damit ID und Name automatisch aus Discord gezogen werden.";
-    discordLoginLink.classList.remove("hidden");
-    discordLoginLink.textContent = "Mit Discord anmelden und ID uebernehmen";
-    discordLogoutLink.classList.add("hidden");
-    loadMyEntryButton.disabled = true;
+    );
+    if (discordLoginLink) {
+      discordLoginLink.classList.remove("hidden");
+      discordLoginLink.textContent = "Mit Discord anmelden und ID uebernehmen";
+    }
+    if (discordLogoutLink) {
+      discordLogoutLink.classList.add("hidden");
+    }
+    if (loadMyEntryButton) {
+      loadMyEntryButton.disabled = true;
+    }
+    if (heroLoginLink) {
+      heroLoginLink.textContent = "Mit Discord anmelden";
+      heroLoginLink.href = authSession.login_url || "/auth/discord?next=%2Farchiv%2F%23editor";
+    }
     renderAuthUser(null);
   }
 
@@ -516,6 +601,9 @@ const syncEditorWithLoggedInUser = async () => {
 };
 
 const renderFeaturedEntry = (entry) => {
+  if (!featuredEmbed) {
+    return;
+  }
   if (!entry) {
     featuredEmbed.innerHTML = "<p>Noch kein Top-Eintrag vorhanden.</p>";
     return;
@@ -610,6 +698,9 @@ const renderFeaturedEntry = (entry) => {
 };
 
 const renderHeroPreview = (entries) => {
+  if (!heroPreviewList) {
+    return;
+  }
   if (!entries.length) {
     heroPreviewList.innerHTML = `
       <div class="mini-entry">
@@ -652,17 +743,22 @@ const renderStats = (entries) => {
     .filter((entry) => entry.updated_at)
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
 
-  statCount.textContent = String(count);
-  statTopScore.textContent = topEntry ? String(topEntry.gearscore) : "0";
-  statAverageScore.textContent = count ? (scoreTotal / count).toFixed(1) : "0";
+  setText(statCount, String(count));
+  setText(statTopScore, topEntry ? String(topEntry.gearscore) : "0");
+  setText(statAverageScore, count ? (scoreTotal / count).toFixed(1) : "0");
 
-  summaryClass.textContent = topEntry?.class || "-";
-  summaryUpdated.textContent = newest ? formatTimestamp(newest.updated_at) : "-";
-  summaryProofs.textContent = String(proofCount);
+  setText(summaryClass, topEntry?.class || "-");
+  setText(summaryUpdated, newest ? formatTimestamp(newest.updated_at) : "-");
+  setText(summaryProofs, String(proofCount));
 };
 
 const renderEntries = (entries) => {
-  emptyState.classList.toggle("hidden", entries.length > 0);
+  if (!leaderboardGrid) {
+    return;
+  }
+  if (emptyState) {
+    emptyState.classList.toggle("hidden", entries.length > 0);
+  }
 
   if (!entries.length) {
     leaderboardGrid.innerHTML = "";
@@ -755,6 +851,9 @@ const renderEntries = (entries) => {
 };
 
 const populateClasses = (classes) => {
+  if (!playerClassSelect) {
+    return;
+  }
   const currentValue = playerClassSelect.value;
   playerClassSelect.innerHTML = `
     <option value="">Klasse auswaehlen</option>
@@ -780,8 +879,8 @@ const applyMeta = (meta) => {
     }
   });
 
-  dataFileLabel.textContent = meta.data_file_label || "gear_data.json";
-  proofsDirLabel.textContent = meta.proofs_dir_label || "proofs";
+  setText(dataFileLabel, meta.data_file_label || "gear_data.json");
+  setText(proofsDirLabel, meta.proofs_dir_label || "proofs");
 
   if (!appCapabilities.supports_proof_upload) {
     proofFileInput.disabled = true;
@@ -798,19 +897,20 @@ const applyMeta = (meta) => {
     scanProofButton.textContent = "Foto-Scan spaeter";
   }
 
-  if (meta.discord_invite) {
-    discordCta.href = meta.discord_invite;
-    discordCta.target = "_blank";
-    discordCta.rel = "noreferrer";
-    discordCta.textContent = "Discord oeffnen";
-    discordStatusLabel.textContent = "Discord Link gesetzt";
-  } else {
-    discordCta.href = "#sync";
-    discordCta.removeAttribute("target");
-    discordCta.removeAttribute("rel");
-    discordCta.textContent = "Discord einrichten";
-    discordStatusLabel.textContent = "Noch nicht gesetzt";
+  if (discordCta) {
+    if (meta.discord_invite) {
+      discordCta.href = meta.discord_invite;
+      discordCta.target = "_blank";
+      discordCta.rel = "noreferrer";
+      discordCta.textContent = "Discord oeffnen";
+    } else {
+      discordCta.href = "#editor";
+      discordCta.removeAttribute("target");
+      discordCta.removeAttribute("rel");
+      discordCta.textContent = "Discord einrichten";
+    }
   }
+  setText(discordStatusLabel, meta.discord_invite ? "Discord Link gesetzt" : "Noch nicht gesetzt");
 
   populateClasses(meta.classes || []);
 };
@@ -1123,28 +1223,47 @@ if ("IntersectionObserver" in window) {
   revealItems.forEach((item) => item.classList.add("is-visible"));
 }
 
-[apInput, aapInput, dpInput].forEach((input) => {
+[apInput, aapInput, dpInput].filter(Boolean).forEach((input) => {
   input.addEventListener("input", updateLiveGearscore);
 });
 
-proofFileInput.addEventListener("change", handleLocalFilePreview);
-proofLinkInput.addEventListener("input", () => {
-  if (!proofFileInput.files?.length && proofLinkInput.value.trim()) {
-    clearScanResult();
-    setProofPreviewFromUrl(proofLinkInput.value.trim(), "Proof-Link gesetzt");
-  } else if (!proofFileInput.files?.length) {
-    clearProofPreview();
-    clearScanResult();
-  }
-});
+if (proofFileInput) {
+  proofFileInput.addEventListener("change", handleLocalFilePreview);
+}
 
-loadEntryButton.addEventListener("click", loadEntry);
-deleteEntryButton.addEventListener("click", deleteEntry);
-refreshBoardButton.addEventListener("click", loadEntries);
-resetFormButton.addEventListener("click", clearFormToDefaults);
-loadMyEntryButton.addEventListener("click", loadMyEntry);
-scanProofButton.addEventListener("click", scanProofImage);
-form.addEventListener("submit", saveEntry);
+if (proofLinkInput) {
+  proofLinkInput.addEventListener("input", () => {
+    if (!proofFileInput?.files?.length && proofLinkInput.value.trim()) {
+      clearScanResult();
+      setProofPreviewFromUrl(proofLinkInput.value.trim(), "Proof-Link gesetzt");
+    } else if (!proofFileInput?.files?.length) {
+      clearProofPreview();
+      clearScanResult();
+    }
+  });
+}
+
+if (loadEntryButton) {
+  loadEntryButton.addEventListener("click", loadEntry);
+}
+if (deleteEntryButton) {
+  deleteEntryButton.addEventListener("click", deleteEntry);
+}
+if (refreshBoardButton) {
+  refreshBoardButton.addEventListener("click", loadEntries);
+}
+if (resetFormButton) {
+  resetFormButton.addEventListener("click", clearFormToDefaults);
+}
+if (loadMyEntryButton) {
+  loadMyEntryButton.addEventListener("click", loadMyEntry);
+}
+if (scanProofButton) {
+  scanProofButton.addEventListener("click", scanProofImage);
+}
+if (form) {
+  form.addEventListener("submit", saveEntry);
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   updateLiveGearscore();

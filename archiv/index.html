@@ -33,29 +33,28 @@
       </button>
 
       <nav class="site-nav" id="main-nav" aria-label="Hauptnavigation">
-        <a href="/">Menue</a>
+        <a href="/">Uebersicht</a>
         <a href="#leaderboard">Rangliste</a>
-        <a href="#editor">Editor</a>
-        <a href="#sync">Discord</a>
+        <a href="#editor">Gear eintragen</a>
       </nav>
     </header>
 
     <main>
-      <section class="hero" id="start">
+      <section class="hero hero-single" id="start">
         <div class="hero-copy reveal">
           <span class="hero-ribbon">Archiv</span>
-          <p class="eyebrow">HOCHMUT | RANGLISTE | EDITOR</p>
-          <h1>Ein ruhiges Archiv fuer die ganze Gilde.</h1>
+          <p class="eyebrow">HOCHMUT | GEARLISTE</p>
+          <h1>Gearliste und eigener Eintrag an einem Ort.</h1>
           <p class="lead">
-            Hier werden Gear-Daten gepflegt, Proofs hinterlegt und Eintraege direkt
-            mit Discord verbunden. Die Seite ist bewusst klar gehalten, damit man
-            Werte schnell findet und aendern kann.
+            Hier siehst du die aktuelle Uebersicht der Gilde. Wenn du etwas aendern
+            willst, meldest du dich mit Discord an und springst direkt zum eigenen
+            Eintrag.
           </p>
 
           <div class="hero-actions">
-            <a class="button button-primary" href="/">Zum Menue</a>
-            <a class="button button-secondary" href="#leaderboard">Zur Rangliste</a>
-            <a class="button button-ghost" id="discord-cta" href="#sync">Discord oeffnen</a>
+            <a class="button button-primary" href="#editor">Gear eintragen</a>
+            <a class="button button-secondary" id="hero-login-link" href="/auth/discord?next=%2Farchiv%23editor">Mit Discord anmelden</a>
+            <a class="button button-ghost" href="#leaderboard">Gearliste ansehen</a>
           </div>
 
           <div class="hero-metrics">
@@ -73,63 +72,14 @@
             </article>
           </div>
         </div>
-
-        <aside class="hero-panel reveal">
-          <div class="featured-embed-panel">
-            <div class="featured-embed-head">
-              <span class="status-pill status-pill-teal">Hochmut Cloud</span>
-              <span class="featured-embed-note">Der staerkste Eintrag im aktuellen Archiv</span>
-            </div>
-            <div id="featured-embed" class="featured-embed">
-              <p>Lade bestehenden Top-Eintrag...</p>
-            </div>
-          </div>
-
-          <div class="mini-board" id="hero-preview">
-            <div class="mini-board-head">
-              <span>Hochmut Feed</span>
-              <button class="inline-button" id="refresh-board" type="button">Neu laden</button>
-            </div>
-            <div id="hero-preview-list" class="mini-board-list"></div>
-          </div>
-        </aside>
-      </section>
-
-      <section class="section" id="overview">
-        <div class="section-heading reveal">
-          <p class="eyebrow">SO FUNKTIONIERT ES</p>
-          <h2>Schnell, klar und ohne doppelte Pflege.</h2>
-          <p class="section-intro">
-            Alles ist auf wenige Schritte reduziert, damit Mitglieder nicht lange
-            suchen oder jedes Mal dieselben Daten neu tippen muessen.
-          </p>
-        </div>
-
-        <div class="feature-grid feature-grid-simple">
-          <article class="feature-card reveal">
-            <span class="feature-kicker">01</span>
-            <h3>Mit Discord verbinden</h3>
-            <p>Discord-ID und Name koennen automatisch uebernommen werden.</p>
-          </article>
-          <article class="feature-card reveal">
-            <span class="feature-kicker">02</span>
-            <h3>Werte eintragen</h3>
-            <p>Gear, Profilwerte und Life-Skills werden direkt in der Cloud gespeichert.</p>
-          </article>
-          <article class="feature-card reveal">
-            <span class="feature-kicker">03</span>
-            <h3>Proof verlinken</h3>
-            <p>Der Nachweis erscheint direkt im Web und bleibt fuer die Discord-App nutzbar.</p>
-          </article>
-        </div>
       </section>
 
       <section class="section board-section" id="leaderboard">
         <div class="section-heading reveal">
           <p class="eyebrow">RANGLISTE DER GILDE</p>
-          <h2>Die wichtigsten Eintraege auf einen Blick.</h2>
+          <h2>Die aktuelle Gearliste der Gilde.</h2>
           <p class="section-intro">
-            Klare Karten, direkte Werte und sichtbare Proofs ohne unnoetige Ablenkung.
+            Alle gespeicherten Eintraege auf einer Seite, sortiert nach Gearscore.
           </p>
         </div>
 
@@ -192,26 +142,6 @@
                 <a class="button button-secondary hidden" id="discord-logout-link" href="/auth/logout?next=%2Farchiv%23editor">Abmelden</a>
                 <button class="button button-secondary" id="load-my-entry" type="button" disabled>Meinen Eintrag laden</button>
               </div>
-            </div>
-
-            <div class="editor-info-card">
-              <span class="status-pill">Editor Status</span>
-              <h3 id="editor-mode-title">Bereit fuer einen neuen Eintrag</h3>
-              <p id="editor-mode-text">
-                Melde dich mit Discord an. Danach wird deine ID automatisch gesetzt und
-                du kannst deinen eigenen Datensatz sicher speichern.
-              </p>
-            </div>
-
-            <div class="editor-info-card">
-              <h3>Welche Felder bleiben Discord-kompatibel?</h3>
-              <ul class="check-list">
-                <li>Discord-ID als eindeutiger Key</li>
-                <li>Familyname, Klasse, State, AP, AAP, DP</li>
-                <li>Optional: Charakter, Spielzeit, Aktivitaet und Life-Skills</li>
-                <li>Gearscore mit gleicher Formel wie im Bot</li>
-                <li>Proof als Link fuer die Cloud-Version</li>
-              </ul>
             </div>
 
             <div class="proof-preview-card" id="proof-preview-card">
@@ -426,35 +356,6 @@
               <p class="form-feedback" id="form-feedback">Noch nichts gespeichert.</p>
             </div>
           </form>
-        </div>
-      </section>
-
-      <section class="section sync-section" id="sync">
-        <div class="sync-box reveal">
-          <div>
-            <p class="eyebrow">DISCORD BRUECKE</p>
-            <h2>Web und Discord bleiben derselbe Datensatz.</h2>
-            <p>
-              Rangliste, Editor und Discord greifen auf denselben Stand zu. So bleibt
-              alles aktuell, ohne doppelte Pflege und ohne dass jemand Werte an mehreren
-              Stellen nachziehen muss.
-            </p>
-          </div>
-
-          <div class="sync-meta">
-            <article class="sync-card">
-              <span>Datenquelle</span>
-              <strong id="data-file-label">Lade Metadaten...</strong>
-            </article>
-            <article class="sync-card">
-              <span>Proof Modus</span>
-              <strong id="proofs-dir-label">Lade Metadaten...</strong>
-            </article>
-            <article class="sync-card">
-              <span>Discord Link</span>
-              <strong id="discord-status-label">Noch nicht gesetzt</strong>
-            </article>
-          </div>
         </div>
       </section>
     </main>
