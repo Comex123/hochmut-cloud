@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="Hochmut Cloud Startseite mit klarem Menue fuer Archiv, Rangliste, Gear-Editor und Discord-App."
+  >
+  <title>Hochmut | Cloud Menue</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="menu-page">
+  <div class="page-shell">
+    <header class="site-header menu-header">
+      <a class="brand" href="/" aria-label="Hochmut Menue">
+        <span class="brand-mark">HM</span>
+        <span class="brand-copy">
+          <strong id="menu-guild-name">Hochmut</strong>
+          <span>Kostenlose Cloud Startseite fuer Gilde, Archiv und Discord</span>
+        </span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="main-nav"
+        aria-label="Navigation oeffnen"
+      >
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="site-nav" id="main-nav" aria-label="Hauptnavigation">
+        <a href="/archiv/">Archiv</a>
+        <a href="/archiv/#leaderboard">Rangliste</a>
+        <a href="/archiv/#editor">Editor</a>
+        <a href="/archiv/#sync">Discord</a>
+      </nav>
+    </header>
+
+    <main class="menu-main">
+      <section class="menu-hero">
+        <div class="menu-hero-copy reveal">
+          <span class="hero-ribbon">Menue</span>
+          <p class="eyebrow">HOCHMUT | CLOUDFLARE | SCHNELLSTART</p>
+          <h1>Waehle direkt, was du machen willst.</h1>
+          <p class="lead">
+            Diese Version laeuft ohne dauerhaften eigenen PC. Von hier kommt ihr
+            direkt zu Rangliste, Editor und der Discord-App mit HTTP-Commands.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="/archiv/#editor">Gear eintragen</a>
+            <a class="button button-secondary" href="/archiv/#leaderboard">Rangliste ansehen</a>
+            <a class="button button-ghost" id="menu-discord-cta" href="/archiv/#sync">Discord oeffnen</a>
+          </div>
+
+          <div class="hero-metrics menu-metrics">
+            <article class="metric-card">
+              <span>Eintraege</span>
+              <strong id="menu-stat-count">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>Top GS</span>
+              <strong id="menu-stat-top-score">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>Zuletzt</span>
+              <strong id="menu-stat-updated">-</strong>
+            </article>
+          </div>
+        </div>
+
+        <aside class="menu-hero-panel reveal">
+          <div class="menu-focus-card">
+            <div class="menu-focus-head">
+              <span class="status-pill">Live Uebersicht</span>
+              <span class="menu-focus-status" id="menu-auth-status">Archiv bereit</span>
+            </div>
+            <h2 id="menu-focus-title">Alles an einem Ort</h2>
+            <p id="menu-focus-copy">
+              Lade Rangliste, aktualisiere dein Gear und halte die Discord-App synchron.
+            </p>
+            <dl class="menu-focus-list">
+              <div>
+                <dt>Top Eintrag</dt>
+                <dd id="menu-top-entry">-</dd>
+              </div>
+              <div>
+                <dt>Proofs</dt>
+                <dd id="menu-proof-count">0</dd>
+              </div>
+              <div>
+                <dt>Discord</dt>
+                <dd id="menu-discord-status">Noch offen</dd>
+              </div>
+            </dl>
+            <a class="button button-secondary" id="menu-auth-action" href="/archiv#editor">Zum Editor</a>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section menu-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">SCHNELLE BEREICHE</p>
+          <h2>Vier klare Wege statt langes Suchen.</h2>
+          <p class="section-intro">
+            Jeder Bereich hat nur eine Aufgabe. Das macht die Seite ruhiger und fuer
+            Mitglieder einfacher zu verstehen.
+          </p>
+        </div>
+
+        <div class="hub-grid">
+          <a class="hub-card reveal" href="/archiv/#editor">
+            <span class="hub-kicker">01</span>
+            <h3>Gear eintragen</h3>
+            <p>Discord verbinden, Werte eintragen und einen Proof-Link speichern.</p>
+            <strong>Sofort zum Formular</strong>
+          </a>
+
+          <a class="hub-card reveal" href="/archiv/#leaderboard">
+            <span class="hub-kicker">02</span>
+            <h3>Rangliste</h3>
+            <p>Alle Mitglieder mit Gearscore, Proof und Klasse auf einen Blick.</p>
+            <strong id="menu-top-preview">Top Eintrag wird geladen...</strong>
+          </a>
+
+          <a class="hub-card reveal" href="/archiv/#sync">
+            <span class="hub-kicker">03</span>
+            <h3>Discord & Sync</h3>
+            <p>Discord-App, Web und D1-Datenbank bleiben ueber dieselbe Datenbasis zusammen.</p>
+            <strong id="menu-discord-preview">Discord Status wird geladen...</strong>
+          </a>
+
+          <a class="hub-card reveal" href="/archiv/">
+            <span class="hub-kicker">04</span>
+            <h3>Archiv oeffnen</h3>
+            <p>Die komplette Cloud-Arbeitsseite mit Rangliste, Editor und Sync-Bereich.</p>
+            <strong>Zum Gildenarchiv</strong>
+          </a>
+        </div>
+      </section>
+
+      <section class="section menu-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">ABLAUF</p>
+          <h2>So nutzen Mitglieder die Seite am einfachsten.</h2>
+        </div>
+
+        <div class="process-grid">
+          <article class="process-card reveal">
+            <span class="feature-kicker">Schritt 1</span>
+            <h3>Mit Discord anmelden</h3>
+            <p>Discord-ID und Name werden automatisch uebernommen.</p>
+          </article>
+          <article class="process-card reveal">
+            <span class="feature-kicker">Schritt 2</span>
+            <h3>Proof-Link setzen</h3>
+            <p>In der Cloud-Version wird der Nachweis ueber einen Bild-Link hinterlegt.</p>
+          </article>
+          <article class="process-card reveal">
+            <span class="feature-kicker">Schritt 3</span>
+            <h3>Speichern und fertig</h3>
+            <p>Der Eintrag bleibt sofort mit Website und Discord-App synchron.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer menu-footer">
+      <p><span id="menu-footer-guild-name">Hochmut</span> Startseite <span id="current-year"></span></p>
+      <p>Klare Wege fuer Rangliste, Editor, Proofs und Discord.</p>
+    </footer>
+  </div>
+
+  <script src="/menu.js"></script>
+</body>
+</html>

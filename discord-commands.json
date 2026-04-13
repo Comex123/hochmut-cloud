@@ -1,0 +1,31 @@
+[
+  {
+    "name": "gear_show",
+    "description": "Zeigt dein Gear oder das eines anderen Users",
+    "type": 1,
+    "options": [
+      {
+        "name": "user",
+        "description": "Optional: anderer Discord-User",
+        "type": 6,
+        "required": false
+      },
+      {
+        "name": "discord_id",
+        "description": "Optional: Discord-ID als Zahl",
+        "type": 3,
+        "required": false
+      }
+    ]
+  },
+  {
+    "name": "gear_list",
+    "description": "Zeigt die Top 10 nach Gearscore",
+    "type": 1
+  },
+  {
+    "name": "gear_link",
+    "description": "Sendet den Link zum Hochmut Archiv",
+    "type": 1
+  }
+]
