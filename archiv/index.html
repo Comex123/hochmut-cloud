@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="Hochmut Cloud Archiv mit Rangliste, Gear-Editor, Proof-Links und Discord-App."
+  >
+  <title>Hochmut | Cloud Archiv</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Hochmut Menue">
+        <span class="brand-mark">HM</span>
+        <span class="brand-copy">
+          <strong id="guild-name">Hochmut</strong>
+          <span>Cloud Archiv fuer Rangliste, Editor und Discord-App</span>
+        </span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="main-nav"
+        aria-label="Navigation oeffnen"
+      >
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="site-nav" id="main-nav" aria-label="Hauptnavigation">
+        <a href="/">Menue</a>
+        <a href="#leaderboard">Rangliste</a>
+        <a href="#editor">Editor</a>
+        <a href="#sync">Discord</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="start">
+        <div class="hero-copy reveal">
+          <span class="hero-ribbon">Archiv</span>
+          <p class="eyebrow">HOCHMUT | CLOUDFLARE | RANGLISTE | EDITOR</p>
+          <h1>Der kostenlose Cloud-Arbeitsbereich fuer die Gilde.</h1>
+          <p class="lead">
+            Hier werden Gear-Daten gepflegt, Proof-Links hinterlegt und Eintraege mit
+            der Discord-App synchron gehalten. Diese Version ist fuer kostenlosen
+            Serverless-Betrieb ohne Dauer-PC vorbereitet.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="/">Zum Menue</a>
+            <a class="button button-secondary" href="#leaderboard">Zur Rangliste</a>
+            <a class="button button-ghost" id="discord-cta" href="#sync">Discord oeffnen</a>
+          </div>
+
+          <div class="hero-metrics">
+            <article class="metric-card">
+              <span>Register</span>
+              <strong id="stat-count">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>Hoher Stand</span>
+              <strong id="stat-top-score">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>Haus-Schnitt</span>
+              <strong id="stat-average-score">0</strong>
+            </article>
+          </div>
+        </div>
+
+        <aside class="hero-panel reveal">
+          <div class="featured-embed-panel">
+            <div class="featured-embed-head">
+              <span class="status-pill status-pill-teal">Hochmut Cloud</span>
+              <span class="featured-embed-note">Der Top-Eintrag im Stil eurer Gilde</span>
+            </div>
+            <div id="featured-embed" class="featured-embed">
+              <p>Lade bestehenden Top-Eintrag...</p>
+            </div>
+          </div>
+
+          <div class="mini-board" id="hero-preview">
+            <div class="mini-board-head">
+              <span>Hochmut Feed</span>
+              <button class="inline-button" id="refresh-board" type="button">Neu laden</button>
+            </div>
+            <div id="hero-preview-list" class="mini-board-list"></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section" id="overview">
+        <div class="section-heading reveal">
+          <p class="eyebrow">SO FUNKTIONIERT ES</p>
+          <h2>Schnell, klar und ohne doppelte Pflege.</h2>
+          <p class="section-intro">
+            Alles ist auf wenige Schritte reduziert, damit Mitglieder nicht lange
+            suchen oder tippen muessen.
+          </p>
+        </div>
+
+        <div class="feature-grid feature-grid-simple">
+          <article class="feature-card reveal">
+            <span class="feature-kicker">01</span>
+            <h3>Mit Discord verbinden</h3>
+            <p>Discord-ID und Name koennen automatisch uebernommen werden.</p>
+          </article>
+          <article class="feature-card reveal">
+            <span class="feature-kicker">02</span>
+            <h3>Werte eintragen</h3>
+            <p>Gear, Profilwerte und Life-Skills werden direkt in der Cloud gespeichert.</p>
+          </article>
+          <article class="feature-card reveal">
+            <span class="feature-kicker">03</span>
+            <h3>Proof verlinken</h3>
+            <p>Der Nachweis erscheint direkt im Web und bleibt fuer die Discord-App nutzbar.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section board-section" id="leaderboard">
+        <div class="section-heading reveal">
+          <p class="eyebrow">RANGLISTE DER GILDE</p>
+          <h2>Die wichtigsten Eintraege auf einen Blick.</h2>
+          <p class="section-intro">
+            Klare Karten, direkte Werte und sichtbare Proofs ohne unnoetige Ablenkung.
+          </p>
+        </div>
+
+        <div class="board-layout">
+          <div class="board-summary reveal">
+            <article class="summary-card">
+              <span>Aktive Klasse an der Spitze</span>
+              <strong id="summary-class">-</strong>
+            </article>
+            <article class="summary-card">
+              <span>Neuestes Update</span>
+              <strong id="summary-updated">-</strong>
+            </article>
+            <article class="summary-card">
+              <span>Proofs hinterlegt</span>
+              <strong id="summary-proofs">0</strong>
+            </article>
+          </div>
+
+          <div class="leaderboard-grid" id="leaderboard-grid"></div>
+
+          <div class="empty-state reveal hidden" id="empty-state">
+            <h3>Noch keine Eintraege gespeichert.</h3>
+            <p>
+              Lege den ersten Datensatz im Editor an oder binde deine bestehende
+              <code>gear_data.json</code> aus dem Discord-Bot an.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section editor-section" id="editor">
+        <div class="section-heading reveal">
+          <p class="eyebrow">GILDENARCHIV</p>
+          <h2>Daten schnell eintragen und direkt speichern.</h2>
+          <p class="section-intro">
+            Der Editor bleibt schlank: Discord verbinden, Werte kurz pruefen,
+            Proof-Link setzen und speichern.
+          </p>
+        </div>
+
+        <div class="editor-layout">
+          <aside class="editor-side reveal">
+            <div class="editor-auth-card">
+              <div class="auth-head">
+                <span class="status-pill">Discord Login</span>
+                <span class="auth-status-label" id="auth-status-label">Noch nicht verbunden</span>
+              </div>
+              <h3>Discord einmal verbinden</h3>
+              <p id="auth-description">
+                Nach dem Login werden Discord-ID und Name automatisch aus Discord
+                uebernommen und direkt in den Editor gesetzt. Dann musst du nur noch
+                Gear, State und deinen Proof-Link pflegen.
+              </p>
+
+              <div class="auth-user hidden" id="auth-user"></div>
+
+              <div class="auth-actions">
+                <a class="button button-primary" id="discord-login-link" href="/auth/discord?next=%2Farchiv%23editor">Mit Discord anmelden und ID uebernehmen</a>
+                <a class="button button-secondary hidden" id="discord-logout-link" href="/auth/logout?next=%2Farchiv%23editor">Abmelden</a>
+                <button class="button button-secondary" id="load-my-entry" type="button" disabled>Meinen Eintrag laden</button>
+              </div>
+            </div>
+
+            <div class="editor-info-card">
+              <span class="status-pill">Editor Status</span>
+              <h3 id="editor-mode-title">Bereit fuer einen neuen Eintrag</h3>
+              <p id="editor-mode-text">
+                Melde dich mit Discord an. Danach wird deine ID automatisch gesetzt und
+                du kannst deinen eigenen Datensatz sicher speichern.
+              </p>
+            </div>
+
+            <div class="editor-info-card">
+              <h3>Welche Felder bleiben Discord-kompatibel?</h3>
+              <ul class="check-list">
+                <li>Discord-ID als eindeutiger Key</li>
+                <li>Familyname, Klasse, State, AP, AAP, DP</li>
+                <li>Optional: Charakter, Spielzeit, Aktivitaet und Life-Skills</li>
+                <li>Gearscore mit gleicher Formel wie im Bot</li>
+                <li>Proof als Link fuer die Cloud-Version</li>
+              </ul>
+            </div>
+
+            <div class="proof-preview-card" id="proof-preview-card">
+              <div class="proof-preview-head">
+                <h3>Proof Vorschau</h3>
+                <span id="proof-preview-label">Kein Proof geladen</span>
+              </div>
+              <div class="proof-preview-body" id="proof-preview-body">
+                <p>Waehle ein Bild oder lade einen vorhandenen Datensatz.</p>
+              </div>
+            </div>
+          </aside>
+
+          <form class="editor-form reveal" id="gear-form">
+            <div class="form-actions top-actions">
+              <button class="button button-secondary" id="load-entry" type="button">Eintrag laden</button>
+              <button class="button button-secondary" id="reset-form" type="button">Formular leeren</button>
+              <button class="button button-danger" id="delete-entry" type="button" disabled>Eintrag loeschen</button>
+            </div>
+
+            <div class="form-grid">
+              <label>
+                <span>Discord-ID</span>
+                <input id="discord-id" name="discord_id" type="text" inputmode="numeric" placeholder="123456789012345678" required>
+                <small id="discord-id-help">Manuell oder automatisch per Discord-Login.</small>
+              </label>
+
+              <label>
+                <span>Discord Name</span>
+                <input id="discord-name" name="discord_name" type="text" placeholder="z. B. Comex">
+                <small id="discord-name-help">Wird bei Discord-Login automatisch gesetzt.</small>
+              </label>
+
+              <label class="full-width">
+                <span>Discord-Profil oder Invite-Link</span>
+                <input id="discord-link" name="discord_link" type="url" placeholder="https://discord.gg/... oder Profil-Link">
+              </label>
+
+              <label>
+                <span>Familyname</span>
+                <input id="familyname" name="familyname" type="text" placeholder="Dein Familyname">
+              </label>
+
+              <label>
+                <span>Klasse</span>
+                <select id="player-class" name="player_class" required></select>
+              </label>
+
+              <label>
+                <span>State</span>
+                <select id="state" name="state" required>
+                  <option value="Awakening">Awakening</option>
+                  <option value="Succession">Succession</option>
+                </select>
+              </label>
+
+              <label>
+                <span>AP</span>
+                <input id="ap" name="ap" type="number" min="0" step="1" placeholder="389" required>
+              </label>
+
+              <label>
+                <span>AAP</span>
+                <input id="aap" name="aap" type="number" min="0" step="1" placeholder="389" required>
+              </label>
+
+              <label>
+                <span>DP</span>
+                <input id="dp" name="dp" type="number" min="0" step="1" placeholder="449" required>
+              </label>
+
+              <div class="full-width form-section-head">
+                <div class="form-section-copy">
+                  <span class="status-pill">Spielerprofil</span>
+                  <p>Optional fuer mehr Infos pro Spieler: Charakter, Spielzeit, Aktivitaet und En./B.p.</p>
+                </div>
+              </div>
+
+              <label>
+                <span>Charaktername</span>
+                <input id="character-name" name="character_name" type="text" placeholder="z. B. Kali_CX">
+              </label>
+
+              <label>
+                <span>Stufe</span>
+                <input id="character-level" name="character_level" type="number" min="1" step="1" placeholder="66">
+              </label>
+
+              <label>
+                <span>Spielzeit</span>
+                <input id="player-time" name="player_time" type="text" placeholder="z. B. 610D 2H">
+              </label>
+
+              <label>
+                <span>Aktivitaet</span>
+                <input id="guild-activity" name="guild_activity" type="text" placeholder="z. B. 3011596 (+840)">
+              </label>
+
+              <label>
+                <span>Energie</span>
+                <input id="energy-points" name="energy_points" type="text" placeholder="z. B. 518">
+              </label>
+
+              <label>
+                <span>Beitragspunkte</span>
+                <input id="contribution-points" name="contribution_points" type="text" placeholder="z. B. 469">
+              </label>
+
+              <div class="full-width form-section-head">
+                <div class="form-section-copy">
+                  <span class="status-pill">Life Skills</span>
+                  <p>Die wichtigsten drei Skills fuer dein Profil, z. B. Fischfang, Guru 24, 670 Mastery.</p>
+                </div>
+              </div>
+
+              <div class="full-width life-skill-editor">
+                <div class="life-skill-editor-grid">
+                  <label>
+                    <span>Skill 1</span>
+                    <input id="life-skill-1-name" name="life_skill_1_name" type="text" placeholder="Fischfang">
+                  </label>
+                  <label>
+                    <span>Rang</span>
+                    <input id="life-skill-1-rank" name="life_skill_1_rank" type="text" placeholder="Guru 24">
+                  </label>
+                  <label>
+                    <span>Mastery</span>
+                    <input id="life-skill-1-mastery" name="life_skill_1_mastery" type="number" min="0" step="1" placeholder="670">
+                  </label>
+
+                  <label>
+                    <span>Skill 2</span>
+                    <input id="life-skill-2-name" name="life_skill_2_name" type="text" placeholder="Kochen">
+                  </label>
+                  <label>
+                    <span>Rang</span>
+                    <input id="life-skill-2-rank" name="life_skill_2_rank" type="text" placeholder="Guru 29">
+                  </label>
+                  <label>
+                    <span>Mastery</span>
+                    <input id="life-skill-2-mastery" name="life_skill_2_mastery" type="number" min="0" step="1" placeholder="695">
+                  </label>
+
+                  <label>
+                    <span>Skill 3</span>
+                    <input id="life-skill-3-name" name="life_skill_3_name" type="text" placeholder="Verarbeiten">
+                  </label>
+                  <label>
+                    <span>Rang</span>
+                    <input id="life-skill-3-rank" name="life_skill_3_rank" type="text" placeholder="Guru 12">
+                  </label>
+                  <label>
+                    <span>Mastery</span>
+                    <input id="life-skill-3-mastery" name="life_skill_3_mastery" type="number" min="0" step="1" placeholder="610">
+                  </label>
+                </div>
+              </div>
+
+              <label class="full-width upload-shell">
+                <span>Proof Upload</span>
+                <input id="proof-file" name="proof_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled>
+                <small>In der kostenlosen Cloud-Version wird der Datei-Upload deaktiviert. Nutze unten einen Proof-Link.</small>
+              </label>
+
+              <div class="full-width scan-shell">
+                <div class="scan-shell-copy">
+                  <strong>Cloud-Hinweis</strong>
+                  <span>Foto-Scan und Datei-Upload bleiben in der lokalen Python-Version. In der Cloud-Version nutzt du Discord-Login und Proof-Links.</span>
+                </div>
+                <button class="button button-secondary" id="scan-proof" type="button" disabled>Foto-Scan spaeter</button>
+              </div>
+
+              <div class="full-width scan-result-card hidden" id="scan-result-card">
+                <div class="scan-result-head">
+                  <div>
+                    <span class="status-pill">Foto-Analyse</span>
+                    <h3 id="scan-result-title">Noch kein Foto gelesen</h3>
+                  </div>
+                  <span class="scan-confidence" id="scan-confidence">-</span>
+                </div>
+                <p class="scan-result-copy" id="scan-result-copy">
+                  Lade einen Screenshot hoch und lies die Werte direkt ins Formular ein.
+                </p>
+                <div class="scan-stat-row" id="scan-stat-row"></div>
+                <p class="scan-meta" id="scan-meta"></p>
+                <p class="scan-warning hidden" id="scan-warning"></p>
+              </div>
+
+              <label class="full-width">
+                <span>Proof-Link</span>
+                <input id="proof-link" name="proof_link" type="url" placeholder="https://cdn.discordapp.com/...">
+              </label>
+
+              <label class="full-width checkbox-row">
+                <input id="clear-proof" name="clear_proof" type="checkbox" value="true">
+                <span>Vorhandenen Proof beim Speichern entfernen</span>
+              </label>
+
+              <label class="full-width">
+                <span>Notizen</span>
+                <textarea id="notes" name="notes" rows="5" placeholder="Optional: Build, Zielwerte, PvE/PvP oder Hinweise fuer Offis"></textarea>
+              </label>
+            </div>
+
+            <div class="calculation-box">
+              <span>Bot-Formel</span>
+              <strong id="live-gearscore">Gearscore: 0</strong>
+            </div>
+
+            <div class="form-actions">
+              <button class="button button-primary" id="save-entry" type="submit">Eintrag speichern</button>
+              <p class="form-feedback" id="form-feedback">Noch nichts gespeichert.</p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="section sync-section" id="sync">
+        <div class="sync-box reveal">
+          <div>
+            <p class="eyebrow">DISCORD BRUECKE</p>
+            <h2>Hochmut bleibt im Web und im Discord derselbe Datensatz.</h2>
+            <p>
+              In der Praxis bedeutet das: dieselbe D1-Datenbank fuer Rangliste und
+              Editor. Dann bleiben Slash-Commands und Web-Editor automatisch im
+              gleichen Stand, ohne dass dein PC laufen muss.
+            </p>
+          </div>
+
+          <div class="sync-meta">
+            <article class="sync-card">
+              <span>Datenquelle</span>
+              <strong id="data-file-label">Lade Metadaten...</strong>
+            </article>
+            <article class="sync-card">
+              <span>Proof Modus</span>
+              <strong id="proofs-dir-label">Lade Metadaten...</strong>
+            </article>
+            <article class="sync-card">
+              <span>Discord Link</span>
+              <strong id="discord-status-label">Noch nicht gesetzt</strong>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p><span id="footer-guild-name">Hochmut</span> Gildenarchiv <span id="current-year"></span></p>
+      <p>Dunkles Register fuer Gear, Proofs und Discord-kompatible Datensaetze.</p>
+    </footer>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>
