@@ -5,6 +5,7 @@ pages_build_output_dir = "."
 [vars]
 GUILD_NAME = "Hochmut"
 DISCORD_INVITE = ""
+DISCORD_CLIENT_ID = "1359156234028191985"
 
 [[d1_databases]]
 binding = "DB"
