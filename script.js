@@ -630,16 +630,16 @@ const extractProfileDetailsFromText = (text) => {
 
   const energyCandidate = pairMatches
     .filter(([left, right]) => left >= 100 && right >= 100 && left <= 700 && right <= 700 && Math.abs(left - right) <= 60)
-    .sort((left, right) => right[0] - left[0])[0];
+    .sort((left, right) => right[1] - left[1])[0];
   if (energyCandidate) {
-    details.energy_points = `${energyCandidate[0]} / ${energyCandidate[1]}`;
+    details.energy_points = String(Math.max(energyCandidate[0], energyCandidate[1]));
   }
 
   const contributionCandidate = pairMatches
     .filter(([left, right]) => left <= 100 && right >= 120 && right <= 800)
     .sort((left, right) => right[1] - left[1])[0];
   if (contributionCandidate) {
-    details.contribution_points = `${contributionCandidate[0]} / ${contributionCandidate[1]}`;
+    details.contribution_points = String(Math.max(contributionCandidate[0], contributionCandidate[1]));
   }
 
   return details;
