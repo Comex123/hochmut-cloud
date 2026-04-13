@@ -10,5 +10,5 @@ export const onRequestGet = async ({ env }) =>
     data_file_label: "Cloudflare D1",
     proofs_dir_label: "Drag-and-Drop oder Proof-Link",
     supports_proof_upload: true,
-    supports_scan: false,
+    supports_scan: true,
   });

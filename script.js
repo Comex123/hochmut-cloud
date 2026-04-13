@@ -103,6 +103,26 @@ let authSession = {
 const authQueryStatus = new URLSearchParams(window.location.search).get("auth");
 const MAX_INLINE_PROOF_BYTES = 380 * 1024;
 const inlineProofPattern = /^data:image\/(?:png|jpeg|jpg|webp);base64,/i;
+const OCR_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+const OCR_LANGUAGE = "deu+eng";
+const OCR_MAX_SIDE = 2200;
+const LIFE_SKILL_ALIASES = {
+  Sammeln: ["Sammeln"],
+  Fischfang: ["Fischfang"],
+  Jagd: ["Jagd"],
+  Kochen: ["Kochen"],
+  Alchemie: ["Alchemie"],
+  Verarbeitung: ["Verarbeitung", "Verarbeiten"],
+  Abrichten: ["Abrichten"],
+  Handel: ["Handel"],
+  Anbau: ["Anbau"],
+  Segeln: ["Segeln"],
+  Warentausch: ["Warentausch"],
+};
+const LIFE_RANK_PATTERN = /\b(Guru|Meister|Fachmann|Kenner|Handwerker|Kunsthandwerker|Lehrling|Anfaenger|Anfänger|Geuebt|Geübt|Professionell)\s*([0-9IVXLC]+)?/i;
+
+let tesseractScriptPromise = null;
+let tesseractWorkerPromise = null;
 
 const setText = (element, value) => {
   if (element) {
@@ -381,6 +401,363 @@ const assignProofFile = (file) => {
   handleLocalFilePreview();
 };
 
+const loadTesseractRuntime = async () => {
+  if (window.Tesseract?.createWorker) {
+    return window.Tesseract;
+  }
+
+  if (!tesseractScriptPromise) {
+    tesseractScriptPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-tesseract-runtime="true"]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.Tesseract), { once: true });
+        existing.addEventListener("error", () => reject(new Error("Die OCR-Bibliothek konnte nicht geladen werden.")), { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = OCR_SCRIPT_URL;
+      script.async = true;
+      script.dataset.tesseractRuntime = "true";
+      script.onload = () => resolve(window.Tesseract);
+      script.onerror = () => reject(new Error("Die OCR-Bibliothek konnte nicht geladen werden."));
+      document.head.append(script);
+    });
+  }
+
+  const runtime = await tesseractScriptPromise;
+  if (!runtime?.createWorker) {
+    throw new Error("Die OCR-Bibliothek ist nicht verfuegbar.");
+  }
+  return runtime;
+};
+
+const getOcrWorker = async () => {
+  if (!tesseractWorkerPromise) {
+    tesseractWorkerPromise = loadTesseractRuntime().then((runtime) => runtime.createWorker(OCR_LANGUAGE));
+  }
+  return tesseractWorkerPromise;
+};
+
+const loadImageElement = (file) =>
+  new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Das Bild konnte nicht geladen werden."));
+    };
+    image.src = objectUrl;
+  });
+
+const buildOcrImage = async (file) => {
+  const image = await loadImageElement(file);
+  const longestSide = Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height, 1);
+  const scale = Math.min(2.4, Math.max(1, OCR_MAX_SIDE / longestSide));
+  const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+  const height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Das Bild konnte fuer OCR nicht vorbereitet werden.");
+  }
+  context.filter = "grayscale(1) contrast(1.35) brightness(1.05)";
+  context.drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL("image/png");
+};
+
+const normalizeOcrText = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
+
+const normalizeSearchText = (value) => normalizeOcrText(value).toLowerCase().replace(/[^a-z0-9]+/g, " ");
+
+const getKnownClasses = () =>
+  Array.from(playerClassSelect?.options || [])
+    .map((option) => option.value)
+    .filter(Boolean);
+
+const detectClassFromText = (text) => {
+  const normalizedText = normalizeSearchText(text);
+  const matches = getKnownClasses().filter((className) => {
+    const normalizedClass = normalizeSearchText(className);
+    return normalizedClass && normalizedText.includes(normalizedClass);
+  });
+  return matches.sort((left, right) => right.length - left.length)[0] || "";
+};
+
+const detectStateFromText = (text) => {
+  const normalizedText = normalizeSearchText(text);
+  if (normalizedText.includes("awakening")) {
+    return "Awakening";
+  }
+  if (normalizedText.includes("succession")) {
+    return "Succession";
+  }
+  return "";
+};
+
+const extractNumberMatches = (text) => {
+  const matches = [];
+  const numberPattern = /\b\d{2,4}\b/g;
+  let match;
+  while ((match = numberPattern.exec(text))) {
+    const value = Number.parseInt(match[0], 10);
+    if (value >= 150 && value <= 600) {
+      matches.push([match.index, value]);
+    }
+  }
+  return matches;
+};
+
+const scoreTriplet = (ap, aap, dp) => {
+  let score = 0;
+  if (ap >= 180 && ap <= 400) {
+    score += 3;
+  }
+  if (aap >= 180 && aap <= 400) {
+    score += 3;
+  }
+  if (dp >= 250 && dp <= 600) {
+    score += 3;
+  }
+  const difference = Math.abs(ap - aap);
+  if (difference <= 60) {
+    score += 2.5;
+  } else if (difference <= 100) {
+    score += 1;
+  }
+  if (dp >= Math.max(ap, aap) - 20) {
+    score += 1;
+  }
+  return score;
+};
+
+const tripletContextBoost = (text, start, end) => {
+  const windowText = text.slice(Math.max(0, start - 48), Math.min(text.length, end + 48)).toLowerCase();
+  let boost = 0;
+  if (windowText.includes("ak") || windowText.includes("ap") || windowText.includes("meine werte")) {
+    boost += 0.9;
+  }
+  if (windowText.includes("erweck") || windowText.includes("aap")) {
+    boost += 0.9;
+  }
+  if (windowText.includes("vk") || windowText.includes("dp") || windowText.includes("verteid")) {
+    boost += 0.9;
+  }
+  return boost;
+};
+
+const guessGearTriplet = (text) => {
+  const pairTripletMatch = text.match(/\b(\d{2,3})\s*\/\s*(\d{2,3})\s*(?:DP|VK)?\s*(\d{2,3})\b/i);
+  if (pairTripletMatch) {
+    return pairTripletMatch.slice(1, 4).map((value) => Number.parseInt(value, 10));
+  }
+
+  const valuesTripletMatch = text.match(/(?:meine werte|ap|ak).{0,40}?(\d{2,3}).{0,30}?(\d{2,3}).{0,30}?(\d{2,3})/i);
+  if (valuesTripletMatch) {
+    const triplet = valuesTripletMatch.slice(1, 4).map((value) => Number.parseInt(value, 10));
+    if (triplet.every((value) => Number.isInteger(value))) {
+      return triplet;
+    }
+  }
+
+  const numberMatches = extractNumberMatches(text);
+  const candidates = [];
+  for (let index = 0; index <= numberMatches.length - 3; index += 1) {
+    const [start, ap] = numberMatches[index];
+    const [, aap] = numberMatches[index + 1];
+    const [end, dp] = numberMatches[index + 2];
+    const score = scoreTriplet(ap, aap, dp) + tripletContextBoost(text, start, end);
+    candidates.push([score, [ap, aap, dp]]);
+  }
+  candidates.sort((left, right) => right[0] - left[0]);
+  return candidates[0]?.[0] >= 7 ? candidates[0][1] : null;
+};
+
+const normalizePlaytime = (value) =>
+  String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*D\s*/gi, "D ")
+    .replace(/\s*H\s*/gi, "H")
+    .trim()
+    .toUpperCase();
+
+const extractProfileDetailsFromText = (text) => {
+  const details = {
+    familyname: "",
+    character_name: "",
+    character_level: null,
+    player_time: "",
+    energy_points: "",
+    contribution_points: "",
+  };
+
+  const familyMatch = text.match(/Famil(?:ie|i[el]e)\s*[:\-]?\s*([A-Za-z0-9_]+)/i);
+  if (familyMatch) {
+    details.familyname = familyMatch[1].trim();
+  }
+
+  const levelNameMatches = Array.from(text.matchAll(/\bSt\.?\s*(\d{1,2})\s+([A-Za-z0-9_ ]{2,32})/gi))
+    .map((match) => ({
+      level: Number.parseInt(match[1], 10),
+      name: String(match[2] || "")
+        .replace(/\bFamil(?:ie|i[el]e)\b.*/i, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/ /g, "_"),
+    }))
+    .filter((item) => item.name && !item.name.toLowerCase().startsWith("famil"));
+  if (levelNameMatches.length) {
+    const best = levelNameMatches.sort((left, right) => right.name.length - left.name.length)[0];
+    details.character_level = best.level;
+    details.character_name = best.name;
+  }
+
+  const playtimeMatch = text.match(/\b(\d+\s*D\s*\d+\s*H)\b/i);
+  if (playtimeMatch) {
+    details.player_time = normalizePlaytime(playtimeMatch[1]);
+  }
+
+  const pairMatches = Array.from(text.matchAll(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/g)).map((match) => [
+    Number.parseInt(match[1], 10),
+    Number.parseInt(match[2], 10),
+  ]);
+
+  const energyCandidate = pairMatches
+    .filter(([left, right]) => left >= 100 && right >= 100 && left <= 700 && right <= 700 && Math.abs(left - right) <= 60)
+    .sort((left, right) => right[0] - left[0])[0];
+  if (energyCandidate) {
+    details.energy_points = `${energyCandidate[0]} / ${energyCandidate[1]}`;
+  }
+
+  const contributionCandidate = pairMatches
+    .filter(([left, right]) => left <= 100 && right >= 120 && right <= 800)
+    .sort((left, right) => right[1] - left[1])[0];
+  if (contributionCandidate) {
+    details.contribution_points = `${contributionCandidate[0]} / ${contributionCandidate[1]}`;
+  }
+
+  return details;
+};
+
+const normalizeRank = (rawRank, rawLevel) => {
+  const title = String(rawRank || "").trim();
+  const level = String(rawLevel || "").trim();
+  if (!title) {
+    return "";
+  }
+  const replacements = {
+    guru: "Guru",
+    meister: "Meister",
+    fachmann: "Fachmann",
+    kenner: "Kenner",
+    handwerker: "Handwerker",
+    kunsthandwerker: "Kunsthandwerker",
+    lehrling: "Lehrling",
+    anfaenger: "Anfaenger",
+    anfänger: "Anfaenger",
+    geuebt: "Geuebt",
+    geübt: "Geuebt",
+    professionell: "Professionell",
+  };
+  const normalizedTitle = replacements[title.toLowerCase()] || `${title.slice(0, 1).toUpperCase()}${title.slice(1).toLowerCase()}`;
+  return `${normalizedTitle} ${level}`.trim();
+};
+
+const extractLifeSkillsFromText = (text) => {
+  const normalizedText = normalizeOcrText(text);
+  const occurrences = [];
+
+  Object.entries(LIFE_SKILL_ALIASES).forEach(([skillName, aliases]) => {
+    aliases.forEach((alias) => {
+      const pattern = new RegExp(alias, "gi");
+      let match;
+      while ((match = pattern.exec(normalizedText))) {
+        occurrences.push([match.index, skillName]);
+      }
+    });
+  });
+
+  occurrences.sort((left, right) => left[0] - right[0]);
+  const results = [];
+  const seen = new Set();
+
+  occurrences.forEach(([start, skillName], index) => {
+    if (seen.has(skillName)) {
+      return;
+    }
+    const nextStart = occurrences[index + 1]?.[0] ?? normalizedText.length;
+    const snippet = normalizedText.slice(start, Math.min(nextStart, start + 160));
+    const rankMatch = snippet.match(LIFE_RANK_PATTERN);
+    const masteryMatch = snippet.match(/\b(\d{2,4})\s*%?\b/g) || [];
+    const masteryValue = masteryMatch
+      .map((value) => Number.parseInt(value.replace("%", ""), 10))
+      .find((value) => value >= 100 && value <= 2000) ?? null;
+
+    results.push({
+      name: skillName,
+      rank: normalizeRank(rankMatch?.[1], rankMatch?.[2]),
+      mastery: masteryValue,
+    });
+    seen.add(skillName);
+  });
+
+  return results
+    .filter((skill) => skill.name && (skill.rank || skill.mastery !== null))
+    .slice(0, 3);
+};
+
+const parseBrowserOcrResult = (text) => {
+  const recognizedText = normalizeOcrText(text);
+  const warnings = [];
+  const triplet = guessGearTriplet(recognizedText);
+  const details = extractProfileDetailsFromText(recognizedText);
+  const lifeSkills = extractLifeSkillsFromText(recognizedText);
+  const detectedClass = detectClassFromText(recognizedText);
+  const detectedState = detectStateFromText(recognizedText);
+  const [ap, aap, dp] = triplet || [null, null, null];
+  const foundGear = [ap, aap, dp].every((value) => Number.isInteger(value));
+  const confidenceScore = [
+    foundGear ? 3 : 0,
+    details.familyname ? 1 : 0,
+    details.character_name ? 1 : 0,
+    lifeSkills.length ? 1 : 0,
+    detectedClass ? 1 : 0,
+  ].reduce((sum, value) => sum + value, 0);
+
+  if (!foundGear) {
+    warnings.push("AP, AAP und DP bitte kurz pruefen oder manuell nachtragen.");
+  }
+  if (!details.familyname && !details.character_name) {
+    warnings.push("Profilwerte wurden nur teilweise erkannt.");
+  }
+
+  return {
+    ap,
+    aap,
+    dp,
+    gearscore: foundGear ? (((ap + aap) / 2) + dp).toFixed(2) : null,
+    familyname: details.familyname,
+    class: detectedClass,
+    state: detectedState,
+    character_name: details.character_name,
+    character_level: details.character_level,
+    player_time: details.player_time,
+    energy_points: details.energy_points,
+    contribution_points: details.contribution_points,
+    life_skills: lifeSkills,
+    recognized_text: recognizedText,
+    complete: foundGear,
+    confidence: confidenceScore >= 5 ? "high" : confidenceScore >= 3 ? "medium" : "low",
+    warnings,
+  };
+};
+
 const clearScanResult = () => {
   if (!scanResultCard) {
     return;
@@ -412,6 +789,8 @@ const renderScanResult = (result, message) => {
     ["Charakter", result.character_name],
     ["Stufe", result.character_level ? `St. ${result.character_level}` : ""],
     ["Spielzeit", result.player_time],
+    ["Energie", result.energy_points],
+    ["Beitrag", result.contribution_points],
     ["Klasse", result.class],
     ["State", result.state],
   ].filter(([, value]) => value !== null && value !== undefined && value !== "");
@@ -1032,6 +1411,15 @@ const applyMeta = (meta) => {
   if (!appCapabilities.supports_scan) {
     scanProofButton.disabled = true;
     scanProofButton.textContent = "Foto-Scan spaeter";
+    scanProofButton.closest(".scan-shell")?.classList.add("hidden");
+  } else if (scanProofButton) {
+    scanProofButton.disabled = false;
+    scanProofButton.textContent = "Bild jetzt auslesen";
+    scanProofButton.closest(".scan-shell")?.classList.remove("hidden");
+    const scanHelp = scanProofButton.closest(".scan-shell")?.querySelector(".scan-shell-copy span");
+    if (scanHelp) {
+      scanHelp.textContent = "Browser-OCR fuer AP, AAP, DP, Profil und Life Skills.";
+    }
   }
 
   if (discordCta) {
@@ -1200,19 +1588,16 @@ const scanProofImage = async () => {
   }
 
   const originalLabel = scanProofButton.textContent;
-  const formData = new FormData();
-  formData.append("image_file", file);
-
   scanProofButton.disabled = true;
-  scanProofButton.textContent = "Foto wird gelesen...";
+  scanProofButton.textContent = "Bild wird gelesen...";
 
   try {
-    const data = await fetchJson("/api/gear-scan", {
-      method: "POST",
-      body: formData,
-    });
+    setFeedback("OCR wird geladen und das Bild analysiert...", "");
+    const worker = await getOcrWorker();
+    const preparedImage = await buildOcrImage(file);
+    const ocrResult = await worker.recognize(preparedImage);
+    const result = parseBrowserOcrResult(ocrResult?.data?.text || "");
 
-    const result = data.result || {};
     if (result.ap !== null && result.ap !== undefined) {
       apInput.value = result.ap;
     }
@@ -1240,23 +1625,41 @@ const scanProofImage = async () => {
     if (result.player_time) {
       playerTimeInput.value = result.player_time;
     }
+    if (result.energy_points) {
+      energyPointsInput.value = result.energy_points;
+    }
+    if (result.contribution_points) {
+      contributionPointsInput.value = result.contribution_points;
+    }
     const reliableLifeSkills = normalizeLifeSkills(result.life_skills).filter(
-      (skill) => skill.mastery !== null && skill.mastery !== undefined
+      (skill) => skill.rank || skill.mastery !== null && skill.mastery !== undefined
     );
-    if (reliableLifeSkills.length >= 2) {
+    if (reliableLifeSkills.length) {
       fillLifeSkillInputs(result.life_skills);
     }
 
     updateLiveGearscore();
-    renderScanResult(result, data.message || "Foto gelesen.");
+    renderScanResult(
+      result,
+      result.complete
+        ? "Bild gelesen. Die wichtigsten Werte wurden direkt ins Formular uebernommen."
+        : "Bild teilweise gelesen. Bitte die vorgeschlagenen Werte kurz pruefen."
+    );
     const foundUsefulData = Boolean(
       result.ap !== null ||
         result.familyname ||
         result.character_name ||
         result.player_time ||
+        result.energy_points ||
+        result.contribution_points ||
         result.life_skills?.length
     );
-    setFeedback(data.message || "Foto gelesen.", foundUsefulData ? "success" : "");
+    setFeedback(
+      foundUsefulData
+        ? "Bild erkannt. Bitte die uebernommenen Werte kurz gegenpruefen."
+        : "Das Bild wurde gelesen, aber es konnte nur wenig sicher erkannt werden.",
+      foundUsefulData ? "success" : "error"
+    );
   } catch (error) {
     clearScanResult();
     setFeedback(error.message, "error");
