@@ -1681,14 +1681,20 @@ const saveEntry = async (event) => {
 
   try {
     const selectedProofFile = proofFileInput?.files?.[0];
+
     if (selectedProofFile) {
-      setFeedback("Proof-Bild wird vorbereitet...", "info");
-      const inlineProofData = await readFileAsOptimizedProof(selectedProofFile);
+      setFeedback("Proof-Bild wird hochgeladen...", "info");
+      const uploadedProofUrl = await uploadProofFile(selectedProofFile);
+
       formData.delete("proof_file");
-      formData.set("proof_data_url", inlineProofData);
+      formData.delete("proof_data_url");
+      formData.set("proof_url", uploadedProofUrl);
+
       if (proofDataUrlInput) {
-        proofDataUrlInput.value = inlineProofData;
+        proofDataUrlInput.value = "";
       }
+    } else {
+      formData.delete("proof_data_url");
     }
 
     const data = await fetchJson("/api/gears", {
