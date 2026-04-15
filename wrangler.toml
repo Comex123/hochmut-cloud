@@ -6,6 +6,7 @@ pages_build_output_dir = "."
 GUILD_NAME = "Hochmut"
 DISCORD_INVITE = ""
 DISCORD_CLIENT_ID = "1359156234028191985"
+PROOFS_PUBLIC_BASE_URL = "HIER_DEINE_R2_DEV_URL_EINFUEGEN"
 
 [[d1_databases]]
 binding = "DB"
@@ -13,3 +14,8 @@ database_name = "hochmut-gears"
 database_id = "91c43dbb-d656-45cb-8fc7-7b0726411699"
 preview_database_id = "91c43dbb-d656-45cb-8fc7-7b0726411699"
 migrations_dir = "db"
+
+[[r2_buckets]]
+binding = "PROOFS"
+bucket_name = "hochmut-proofs"
+preview_bucket_name = "hochmut-proofs"
