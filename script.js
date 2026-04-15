@@ -1733,6 +1733,22 @@ const deleteEntry = async () => {
   }
 };
 
+const uploadProofFile = async (file) => {
+  const uploadFormData = new FormData();
+  uploadFormData.set("file", file);
+
+  const data = await fetchJson("/api/proof-upload", {
+    method: "POST",
+    body: uploadFormData,
+  });
+
+  if (!data?.proofUrl) {
+    throw new Error("Der Proof-Upload hat keine URL zurueckgegeben.");
+  }
+
+  return data.proofUrl;
+};
+
 if (currentYear) {
   currentYear.textContent = new Date().getFullYear();
 }
