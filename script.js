@@ -1457,7 +1457,7 @@ const hydrateForm = (entry) => {
   energyPointsInput.value = entry.energy_points || "";
   contributionPointsInput.value = entry.contribution_points || "";
   fillLifeSkillInputs(entry.life_skills || []);
-  proofLinkInput.value = entry.proof?.startsWith("http") ? entry.proof : "";
+proofLinkInput.value = entry.proof_url?.startsWith("http") ? entry.proof_url : "";
   resetInlineProofData();
   clearProofInput.checked = false;
   notesInput.value = entry.notes || "";
