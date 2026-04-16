@@ -8,8 +8,9 @@ export const onRequestGet = async ({ env }) =>
     states: VALID_STATES,
     classes: BDO_CLASSES,
     data_file_label: "Cloudflare D1",
-    proofs_dir_label: env.PROOFS ? "Cloudflare R2 oder Proof-Link" : "Proof-Link oder interner Fallback",
+    proofs_dir_label: env.PROOFS ? "Cloud-Speicher oder Proof-Link" : "Interner Bildspeicher oder Proof-Link",
     supports_proof_upload: true,
-    proof_storage: env.PROOFS ? "r2" : "inline",
+    proof_storage: env.PROOFS ? "cloud" : "inline",
     supports_scan: true,
+    proof_runtime_version: "2026-04-17-inline-proof-v2",
   });

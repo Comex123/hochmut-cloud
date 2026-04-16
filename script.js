@@ -1458,9 +1458,9 @@ const applyMeta = (meta) => {
     proofDropzone.classList.remove("is-disabled");
     if (proofUploadHelp) {
       proofUploadHelp.textContent =
-        appCapabilities.proof_storage === "r2"
-          ? "Zieh dein Proof-Foto hinein. Es wird als echte Datei in Cloudflare R2 gespeichert."
-          : "Zieh dein Proof-Foto hinein. Falls R2 noch nicht verbunden ist, nutzt die Seite den internen Proof-Fallback.";
+        appCapabilities.proof_storage === "cloud"
+          ? "Zieh dein Proof-Foto hinein. Es wird als echte Datei im Cloud-Speicher gesichert."
+          : "Zieh dein Proof-Foto hinein. Die Seite speichert es intern, ohne zusaetzlichen Cloud-Speicher.";
     }
   }
 
@@ -1741,20 +1741,35 @@ const saveEntry = async (event) => {
       formData.delete("proof_file");
       formData.delete("proof_data_url");
 
-      try {
-        setFeedback("Proof-Bild wird in die Cloud hochgeladen...", "");
-        const uploadResult = await uploadProofFile(selectedProofFile);
-        formData.set("proof_link", uploadResult.proofStorageRef || uploadResult.proofUrl || "");
-        if (proofLinkInput && uploadResult.proofUrl) {
-          proofLinkInput.value = uploadResult.proofUrl;
+      if (appCapabilities.proof_storage === "cloud") {
+        try {
+          setFeedback("Proof-Bild wird in den Cloud-Speicher geladen...", "");
+          const uploadResult = await uploadProofFile(selectedProofFile);
+          formData.set("proof_link", uploadResult.proofStorageRef || uploadResult.proofUrl || "");
+          if (proofLinkInput && uploadResult.proofUrl) {
+            proofLinkInput.value = uploadResult.proofUrl;
+          }
+          resetInlineProofData();
+        } catch (uploadError) {
+          setFeedback("Cloud-Speicher nicht verfuegbar, interner Bildspeicher wird genutzt...", "");
+          const inlineProofData = await readFileAsOptimizedProof(selectedProofFile);
+          formData.set("proof_data_url", inlineProofData);
+          if (proofDataUrlInput) {
+            proofDataUrlInput.value = inlineProofData;
+          }
+          if (proofLinkInput) {
+            proofLinkInput.value = "";
+          }
         }
-        resetInlineProofData();
-      } catch (uploadError) {
-        setFeedback("Cloud-Upload nicht verfuegbar, interner Proof-Fallback wird genutzt...", "");
+      } else {
+        setFeedback("Proof-Bild wird intern gespeichert...", "");
         const inlineProofData = await readFileAsOptimizedProof(selectedProofFile);
         formData.set("proof_data_url", inlineProofData);
         if (proofDataUrlInput) {
           proofDataUrlInput.value = inlineProofData;
+        }
+        if (proofLinkInput) {
+          proofLinkInput.value = "";
         }
       }
     }
