@@ -173,8 +173,9 @@ const buildGearEmbed = (entry, origin) => {
     embed.thumbnail = { url: thumbnailUrl };
   }
 
-  if (isPublicHttpUrl(entry.proof_url)) {
-    embed.image = { url: entry.proof_url };
+  const proofImageUrl = absoluteUrl(origin, entry.proof_url);
+  if (isPublicHttpUrl(proofImageUrl)) {
+    embed.image = { url: proofImageUrl };
   }
 
   if (entry.notes) {

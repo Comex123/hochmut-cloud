@@ -1,10 +1,17 @@
 import { getPortraitUrl, normalizeLifeSkills } from "./constants.js";
 import { SEED_GEAR_ENTRIES } from "./seed-data.js";
 
-const normalizeProofUrl = (value) => {
+const isInlineProofDataUrl = (value) =>
+  /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(String(value || "").trim());
+
+const normalizeProofUrl = (value, discordId = "") => {
   const proofUrl = String(value || "").trim();
   if (!proofUrl) {
     return "";
+  }
+
+  if (isInlineProofDataUrl(proofUrl) && discordId) {
+    return `/api/proofs/${encodeURIComponent(String(discordId))}`;
   }
 
   if (proofUrl.startsWith("/proofs/")) {
@@ -60,8 +67,8 @@ const mapRowToEntry = (row) => {
     contribution_points: row.contribution_points || "",
     life_skills: lifeSkills,
     notes: row.notes || "",
-    proof: normalizeProofUrl(row.proof_url),
-    proof_url: normalizeProofUrl(row.proof_url),
+    proof: normalizeProofUrl(row.proof_url, row.discord_id),
+    proof_url: normalizeProofUrl(row.proof_url, row.discord_id),
     portrait_url: getPortraitUrl(row.player_class),
     updated_at: row.updated_at || "",
   };
