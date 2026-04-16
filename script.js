@@ -148,6 +148,19 @@ const truncateText = (value, maxLength = 320) => {
   return `${text.slice(0, maxLength - 1)}...`;
 };
 
+const resolveProofUrl = (entry) => {
+  const proofValue = String(entry?.proof_url || entry?.proof || "").trim();
+  if (!proofValue) {
+    return "";
+  }
+
+  if (inlineProofPattern.test(proofValue) && entry?.discord_id) {
+    return `/api/proof?id=${encodeURIComponent(String(entry.discord_id))}`;
+  }
+
+  return proofValue;
+};
+
 const normalizeLifeSkills = (skills) =>
   (skills || []).filter((skill) => skill && (skill.name || skill.rank || skill.mastery !== null && skill.mastery !== undefined));
 
@@ -1275,7 +1288,8 @@ const renderEntries = (entries) => {
   leaderboardGrid.innerHTML = entries
     .map((entry, index) => {
       const displayName = getDisplayName(entry);
-      const proofLinkHtml = entry.proof_url
+      const proofUrl = resolveProofUrl(entry);
+      const proofLinkHtml = proofUrl
         ? `<button class="text-link leader-link-pill leader-proof-toggle" type="button" data-proof-toggle="${escapeHtml(entry.discord_id)}" aria-expanded="false">Proof anzeigen</button>`
         : "";
       const discordLinkHtml = entry.discord_link
@@ -1289,11 +1303,11 @@ const renderEntries = (entries) => {
         : "";
       const profileHtml = renderProfileBlock(entry, "player-profile-block-leader");
       const lifeSkillHtml = renderLifeSkillBlock(entry.life_skills, "player-skill-block-leader");
-      const proofPreviewHtml = entry.proof_url
+      const proofPreviewHtml = proofUrl
         ? `
           <div class="leader-proof-card hidden" data-proof-panel="${escapeHtml(entry.discord_id)}">
             <span class="leader-proof-label">Proof Bild</span>
-            <img class="leader-proof-image" src="${escapeHtml(entry.proof_url)}" alt="Proof von ${escapeHtml(displayName)}">
+            <img class="leader-proof-image" src="${escapeHtml(proofUrl)}" alt="Proof von ${escapeHtml(displayName)}">
           </div>
         `
         : "";

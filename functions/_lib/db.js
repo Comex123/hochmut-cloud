@@ -11,7 +11,7 @@ const normalizeProofUrl = (value, discordId = "") => {
   }
 
   if (isInlineProofDataUrl(proofUrl) && discordId) {
-    return `/api/proofs/${encodeURIComponent(String(discordId))}`;
+    return `/api/proof?id=${encodeURIComponent(String(discordId))}`;
   }
 
   if (proofUrl.startsWith("/proofs/")) {

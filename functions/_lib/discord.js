@@ -10,6 +10,8 @@ import { getEntry, listEntries } from "./db.js";
 
 const encoder = new TextEncoder();
 const isPublicHttpUrl = (value) => /^https?:\/\//i.test(String(value || "").trim());
+const isInlineProofDataUrl = (value) =>
+  /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(String(value || "").trim());
 
 const hexToBytes = (value) =>
   Uint8Array.from((value || "").match(/.{1,2}/g) || [], (pair) => Number.parseInt(pair, 16));
@@ -173,7 +175,11 @@ const buildGearEmbed = (entry, origin) => {
     embed.thumbnail = { url: thumbnailUrl };
   }
 
-  const proofImageUrl = absoluteUrl(origin, entry.proof_url);
+  const proofImageValue =
+    isInlineProofDataUrl(entry.proof_url) && entry.discord_id
+      ? `/api/proof?id=${encodeURIComponent(String(entry.discord_id))}`
+      : entry.proof_url;
+  const proofImageUrl = absoluteUrl(origin, proofImageValue);
   if (isPublicHttpUrl(proofImageUrl)) {
     embed.image = { url: proofImageUrl };
   }

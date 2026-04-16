@@ -30,6 +30,21 @@ const escapeHtml = (value) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+const inlineProofPattern = /^data:image\/(?:png|jpeg|jpg|webp);base64,/i;
+
+const resolveProofUrl = (entry) => {
+  const proofValue = String(entry?.proof_url || entry?.proof || "").trim();
+  if (!proofValue) {
+    return "";
+  }
+
+  if (inlineProofPattern.test(proofValue) && entry?.discord_id) {
+    return `/api/proof?id=${encodeURIComponent(String(entry.discord_id))}`;
+  }
+
+  return proofValue;
+};
+
 const formatTimestamp = (value) => {
   if (!value) {
     return "-";
@@ -89,15 +104,16 @@ const renderOverview = (items) => {
       const portrait = entry.portrait_url
         ? `<img class="overview-player-portrait" src="${escapeHtml(entry.portrait_url)}" alt="${escapeHtml(entry.class || "Klasse")}">`
         : `<span class="overview-player-portrait overview-player-portrait-fallback">${escapeHtml((entry.class || "?").charAt(0))}</span>`;
-      const proof = entry.proof_url
+      const proofUrl = resolveProofUrl(entry);
+      const proof = proofUrl
         ? `<button class="table-pill overview-proof-toggle" type="button" data-proof-toggle="${escapeHtml(entry.discord_id)}" aria-expanded="false">Proof</button>`
         : `<span class="table-pill is-muted">-</span>`;
-      const proofPanel = entry.proof_url
+      const proofPanel = proofUrl
         ? `
           <article class="overview-table-row overview-proof-row hidden" data-proof-panel="${escapeHtml(entry.discord_id)}">
             <div class="overview-proof-wrap">
               <span class="overview-proof-label">Proof von ${escapeHtml(displayName)}</span>
-              <img class="overview-proof-image" src="${escapeHtml(entry.proof_url)}" alt="Proof von ${escapeHtml(displayName)}">
+              <img class="overview-proof-image" src="${escapeHtml(proofUrl)}" alt="Proof von ${escapeHtml(displayName)}">
             </div>
           </article>
         `
