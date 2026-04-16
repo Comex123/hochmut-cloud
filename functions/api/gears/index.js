@@ -17,12 +17,14 @@ const publicDbError = (error) =>
     ? "Cloudflare D1 ist im Pages-Projekt noch nicht als Binding 'DB' verbunden. Bitte unter Einstellungen > Bindungen die D1-Datenbank an 'DB' binden und neu bereitstellen."
     : "Die Geardaten konnten gerade nicht geladen werden.";
 
+const isInlineProofDataUrl = (value) => /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(String(value || "").trim());
+
 export const onRequestGet = async ({ env }) => {
   try {
     const items = await listEntries(env.DB);
     return jsonResponse({ count: items.length, items });
   } catch (error) {
-    return jsonError(publicDbError(error), 500);
+    return jsonError(publicDbError(error), error?.code === "missing_db_binding" ? 500 : 500);
   }
 };
 
@@ -33,17 +35,23 @@ export const onRequestPost = async ({ request, env }) => {
   }
 
   const formData = await request.formData();
-  const discordId = cleanText(sessionUser.id);
+  const proofFile = formData.get("proof_file");
+  const proofDataUrl = cleanText(formData.get("proof_data_url"));
+  if (proofFile instanceof File && proofFile.size > 0 && !proofDataUrl) {
+    return jsonError(
+      "Das Proof-Bild konnte nicht vorbereitet werden. Bitte das Bild erneut hineinziehen oder neu auswaehlen.",
+      422
+    );
+  }
 
+  const discordId = cleanText(sessionUser.id);
   let existing;
   try {
     existing = await getGearRecord(env.DB, discordId);
   } catch (error) {
-    return jsonError(publicDbError(error), 500);
+    return jsonError(publicDbError(error), error?.code === "missing_db_binding" ? 500 : 500);
   }
-
   const proofLink = cleanText(formData.get("proof_link"));
-  const uploadedProofUrl = cleanText(formData.get("proof_url"));
   const clearProof = ["1", "true", "yes", "on"].includes(cleanText(formData.get("clear_proof")).toLowerCase());
 
   const playerClass = cleanText(formData.get("player_class"));
@@ -55,8 +63,12 @@ export const onRequestPost = async ({ request, env }) => {
     return jsonError("Proof-Link muss mit http:// oder https:// beginnen.");
   }
 
-  if (uploadedProofUrl && !isHttpUrl(uploadedProofUrl)) {
-    return jsonError("Proof-Upload-URL ist ungueltig.");
+  if (proofDataUrl && !isInlineProofDataUrl(proofDataUrl)) {
+    return jsonError("Das Proof-Bild hat kein unterstuetztes Format.");
+  }
+
+  if (proofDataUrl.length > 600000) {
+    return jsonError("Das Proof-Bild ist fuer die Cloud-Version noch zu gross. Bitte einen kleineren Screenshot verwenden.");
   }
 
   let state;
@@ -77,8 +89,7 @@ export const onRequestPost = async ({ request, env }) => {
     return jsonError(error.message);
   }
 
-  const proofUrl = clearProof ? "" : uploadedProofUrl || proofLink || existing?.proof_url || "";
-
+  const proofUrl = clearProof ? "" : proofLink || proofDataUrl || existing?.proof_url || "";
   const payload = {
     discord_id: discordId,
     discord_name: cleanText(sessionUser.display_name || sessionUser.username),
@@ -112,6 +123,6 @@ export const onRequestPost = async ({ request, env }) => {
       item,
     });
   } catch (error) {
-    return jsonError(publicDbError(error), 500);
+    return jsonError(publicDbError(error), error?.code === "missing_db_binding" ? 500 : 500);
   }
 };
