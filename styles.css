@@ -328,6 +328,36 @@ h3 {
   color: var(--text-faint);
 }
 
+.overview-proof-toggle {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  font: inherit;
+}
+
+.overview-proof-row {
+  grid-template-columns: 1fr;
+  padding-top: 12px;
+}
+
+.overview-proof-wrap {
+  display: grid;
+  gap: 10px;
+}
+
+.overview-proof-label {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.overview-proof-image {
+  width: 100%;
+  max-width: 720px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #181513;
+}
+
 .overview-player {
   display: flex;
   align-items: center;
@@ -773,6 +803,35 @@ h3 {
 .scan-stat-chip strong {
   display: block;
   margin-top: 5px;
+}
+
+.leader-proof-toggle {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  font: inherit;
+}
+
+.leader-proof-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel-soft);
+}
+
+.leader-proof-label {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.leader-proof-image {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #181513;
 }
 
 .checkbox-row {

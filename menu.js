@@ -90,8 +90,18 @@ const renderOverview = (items) => {
         ? `<img class="overview-player-portrait" src="${escapeHtml(entry.portrait_url)}" alt="${escapeHtml(entry.class || "Klasse")}">`
         : `<span class="overview-player-portrait overview-player-portrait-fallback">${escapeHtml((entry.class || "?").charAt(0))}</span>`;
       const proof = entry.proof_url
-        ? `<a class="table-pill" href="${escapeHtml(entry.proof_url)}" target="_blank" rel="noreferrer">Proof</a>`
+        ? `<button class="table-pill overview-proof-toggle" type="button" data-proof-toggle="${escapeHtml(entry.discord_id)}" aria-expanded="false">Proof</button>`
         : `<span class="table-pill is-muted">-</span>`;
+      const proofPanel = entry.proof_url
+        ? `
+          <article class="overview-table-row overview-proof-row hidden" data-proof-panel="${escapeHtml(entry.discord_id)}">
+            <div class="overview-proof-wrap">
+              <span class="overview-proof-label">Proof von ${escapeHtml(displayName)}</span>
+              <img class="overview-proof-image" src="${escapeHtml(entry.proof_url)}" alt="Proof von ${escapeHtml(displayName)}">
+            </div>
+          </article>
+        `
+        : "";
 
       return `
         <article class="overview-table-row">
@@ -109,9 +119,35 @@ const renderOverview = (items) => {
           <strong class="table-gs">${escapeHtml(entry.gearscore)}</strong>
           ${proof}
         </article>
+        ${proofPanel}
       `;
     })
     .join("");
+};
+
+const toggleOverviewProof = (discordId) => {
+  if (!overviewList || !discordId) {
+    return;
+  }
+
+  const safeId = CSS.escape(String(discordId));
+  const panels = Array.from(overviewList.querySelectorAll("[data-proof-panel]"));
+  const toggles = Array.from(overviewList.querySelectorAll("[data-proof-toggle]"));
+  const targetPanel = overviewList.querySelector(`[data-proof-panel="${safeId}"]`);
+  const targetToggle = overviewList.querySelector(`[data-proof-toggle="${safeId}"]`);
+  const shouldOpen = Boolean(targetPanel?.classList.contains("hidden"));
+
+  panels.forEach((panel) => panel.classList.add("hidden"));
+  toggles.forEach((toggle) => {
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.textContent = "Proof";
+  });
+
+  if (shouldOpen && targetPanel && targetToggle) {
+    targetPanel.classList.remove("hidden");
+    targetToggle.setAttribute("aria-expanded", "true");
+    targetToggle.textContent = "Schliessen";
+  }
 };
 
 const applyEntries = (items) => {
@@ -182,6 +218,17 @@ if ("IntersectionObserver" in window) {
   revealItems.forEach((item) => observer.observe(item));
 } else {
   revealItems.forEach((item) => item.classList.add("is-visible"));
+}
+
+if (overviewList) {
+  overviewList.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-proof-toggle]");
+    if (!toggle) {
+      return;
+    }
+    event.preventDefault();
+    toggleOverviewProof(toggle.getAttribute("data-proof-toggle"));
+  });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

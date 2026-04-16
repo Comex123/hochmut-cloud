@@ -1276,7 +1276,7 @@ const renderEntries = (entries) => {
     .map((entry, index) => {
       const displayName = getDisplayName(entry);
       const proofLinkHtml = entry.proof_url
-        ? `<a class="text-link leader-link-pill" href="${escapeHtml(entry.proof_url)}" target="_blank" rel="noreferrer">Proof</a>`
+        ? `<button class="text-link leader-link-pill leader-proof-toggle" type="button" data-proof-toggle="${escapeHtml(entry.discord_id)}" aria-expanded="false">Proof anzeigen</button>`
         : "";
       const discordLinkHtml = entry.discord_link
         ? `<a class="text-link leader-link-pill" href="${escapeHtml(entry.discord_link)}" target="_blank" rel="noreferrer">Discord</a>`
@@ -1291,10 +1291,10 @@ const renderEntries = (entries) => {
       const lifeSkillHtml = renderLifeSkillBlock(entry.life_skills, "player-skill-block-leader");
       const proofPreviewHtml = entry.proof_url
         ? `
-          <a class="leader-proof-card" href="${escapeHtml(entry.proof_url)}" target="_blank" rel="noreferrer">
+          <div class="leader-proof-card hidden" data-proof-panel="${escapeHtml(entry.discord_id)}">
             <span class="leader-proof-label">Proof Bild</span>
             <img class="leader-proof-image" src="${escapeHtml(entry.proof_url)}" alt="Proof von ${escapeHtml(displayName)}">
-          </a>
+          </div>
         `
         : "";
 
@@ -1355,6 +1355,34 @@ const renderEntries = (entries) => {
       `;
     })
     .join("");
+};
+
+const toggleProofPanel = (discordId) => {
+  if (!leaderboardGrid || !discordId) {
+    return;
+  }
+
+  const safeId = CSS.escape(String(discordId));
+  const panels = Array.from(leaderboardGrid.querySelectorAll("[data-proof-panel]"));
+  const toggles = Array.from(leaderboardGrid.querySelectorAll("[data-proof-toggle]"));
+  const targetPanel = leaderboardGrid.querySelector(`[data-proof-panel="${safeId}"]`);
+  const targetToggle = leaderboardGrid.querySelector(`[data-proof-toggle="${safeId}"]`);
+  const shouldOpen = Boolean(targetPanel?.classList.contains("hidden"));
+
+  panels.forEach((panel) => {
+    panel.classList.add("hidden");
+  });
+
+  toggles.forEach((toggle) => {
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.textContent = "Proof anzeigen";
+  });
+
+  if (shouldOpen && targetPanel && targetToggle) {
+    targetPanel.classList.remove("hidden");
+    targetToggle.setAttribute("aria-expanded", "true");
+    targetToggle.textContent = "Proof ausblenden";
+  }
 };
 
 const populateClasses = (classes) => {
@@ -1457,7 +1485,7 @@ const hydrateForm = (entry) => {
   energyPointsInput.value = entry.energy_points || "";
   contributionPointsInput.value = entry.contribution_points || "";
   fillLifeSkillInputs(entry.life_skills || []);
-proofLinkInput.value = entry.proof_url?.startsWith("http") ? entry.proof_url : "";
+  proofLinkInput.value = entry.proof?.startsWith("http") ? entry.proof : "";
   resetInlineProofData();
   clearProofInput.checked = false;
   notesInput.value = entry.notes || "";
@@ -1681,20 +1709,14 @@ const saveEntry = async (event) => {
 
   try {
     const selectedProofFile = proofFileInput?.files?.[0];
-
     if (selectedProofFile) {
-      setFeedback("Proof-Bild wird hochgeladen...", "info");
-      const uploadedProofUrl = await uploadProofFile(selectedProofFile);
-
+      setFeedback("Proof-Bild wird vorbereitet...", "info");
+      const inlineProofData = await readFileAsOptimizedProof(selectedProofFile);
       formData.delete("proof_file");
-      formData.delete("proof_data_url");
-      formData.set("proof_url", uploadedProofUrl);
-
+      formData.set("proof_data_url", inlineProofData);
       if (proofDataUrlInput) {
-        proofDataUrlInput.value = "";
+        proofDataUrlInput.value = inlineProofData;
       }
-    } else {
-      formData.delete("proof_data_url");
     }
 
     const data = await fetchJson("/api/gears", {
@@ -1737,22 +1759,6 @@ const deleteEntry = async () => {
   } catch (error) {
     setFeedback(error.message, "error");
   }
-};
-
-const uploadProofFile = async (file) => {
-  const uploadFormData = new FormData();
-  uploadFormData.set("file", file);
-
-  const data = await fetchJson("/api/proof-upload", {
-    method: "POST",
-    body: uploadFormData,
-  });
-
-  if (!data?.proofUrl) {
-    throw new Error("Der Proof-Upload hat keine URL zurueckgegeben.");
-  }
-
-  return data.proofUrl;
 };
 
 if (currentYear) {
@@ -1879,6 +1885,16 @@ if (scanProofButton) {
 }
 if (form) {
   form.addEventListener("submit", saveEntry);
+}
+if (leaderboardGrid) {
+  leaderboardGrid.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-proof-toggle]");
+    if (!toggle) {
+      return;
+    }
+    event.preventDefault();
+    toggleProofPanel(toggle.getAttribute("data-proof-toggle"));
+  });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
