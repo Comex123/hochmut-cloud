@@ -90,6 +90,7 @@ let currentLoadedId = "";
 let currentPreviewObjectUrl = "";
 let appCapabilities = {
   supports_proof_upload: true,
+  proof_storage: "inline",
   supports_scan: true,
 };
 let authSession = {
@@ -389,6 +390,15 @@ const readFileAsOptimizedProof = async (file) => {
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+};
+
+const uploadProofFile = async (file) => {
+  const uploadData = new FormData();
+  uploadData.set("file", file);
+  return fetchJson("/api/proof-upload", {
+    method: "POST",
+    body: uploadData,
+  });
 };
 
 const assignProofFile = (file) => {
@@ -1419,6 +1429,7 @@ const populateClasses = (classes) => {
 const applyMeta = (meta) => {
   appCapabilities = {
     supports_proof_upload: meta.supports_proof_upload !== false,
+    proof_storage: meta.proof_storage || "inline",
     supports_scan: meta.supports_scan !== false,
   };
 
@@ -1446,7 +1457,10 @@ const applyMeta = (meta) => {
     proofDropzone.disabled = false;
     proofDropzone.classList.remove("is-disabled");
     if (proofUploadHelp) {
-      proofUploadHelp.textContent = "Zieh dein Proof-Foto einfach hinein oder nutze weiter einen Proof-Link.";
+      proofUploadHelp.textContent =
+        appCapabilities.proof_storage === "r2"
+          ? "Zieh dein Proof-Foto hinein. Es wird als echte Datei in Cloudflare R2 gespeichert."
+          : "Zieh dein Proof-Foto hinein. Falls R2 noch nicht verbunden ist, nutzt die Seite den internen Proof-Fallback.";
     }
   }
 
@@ -1724,12 +1738,24 @@ const saveEntry = async (event) => {
   try {
     const selectedProofFile = proofFileInput?.files?.[0];
     if (selectedProofFile) {
-      setFeedback("Proof-Bild wird vorbereitet...", "info");
-      const inlineProofData = await readFileAsOptimizedProof(selectedProofFile);
       formData.delete("proof_file");
-      formData.set("proof_data_url", inlineProofData);
-      if (proofDataUrlInput) {
-        proofDataUrlInput.value = inlineProofData;
+      formData.delete("proof_data_url");
+
+      try {
+        setFeedback("Proof-Bild wird in die Cloud hochgeladen...", "");
+        const uploadResult = await uploadProofFile(selectedProofFile);
+        formData.set("proof_link", uploadResult.proofStorageRef || uploadResult.proofUrl || "");
+        if (proofLinkInput && uploadResult.proofUrl) {
+          proofLinkInput.value = uploadResult.proofUrl;
+        }
+        resetInlineProofData();
+      } catch (uploadError) {
+        setFeedback("Cloud-Upload nicht verfuegbar, interner Proof-Fallback wird genutzt...", "");
+        const inlineProofData = await readFileAsOptimizedProof(selectedProofFile);
+        formData.set("proof_data_url", inlineProofData);
+        if (proofDataUrlInput) {
+          proofDataUrlInput.value = inlineProofData;
+        }
       }
     }
 

@@ -18,6 +18,7 @@ const publicDbError = (error) =>
     : "Die Geardaten konnten gerade nicht geladen werden.";
 
 const isInlineProofDataUrl = (value) => /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(String(value || "").trim());
+const isStoredProofReference = (value) => /^r2:/i.test(String(value || "").trim());
 
 export const onRequestGet = async ({ env }) => {
   try {
@@ -59,8 +60,8 @@ export const onRequestPost = async ({ request, env }) => {
     return jsonError("Bitte eine gueltige BDO-Klasse auswaehlen.");
   }
 
-  if (proofLink && !isHttpUrl(proofLink)) {
-    return jsonError("Proof-Link muss mit http:// oder https:// beginnen.");
+  if (proofLink && !isHttpUrl(proofLink) && !isStoredProofReference(proofLink)) {
+    return jsonError("Proof-Link muss mit http://, https:// oder einem internen Upload starten.");
   }
 
   if (proofDataUrl && !isInlineProofDataUrl(proofDataUrl)) {

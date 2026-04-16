@@ -4,6 +4,7 @@ import { jsonError, jsonResponse } from "../_lib/http.js";
 
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp"]);
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const KNOWN_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
 
 const fileExtensionFromType = (type) => {
   switch (type) {
@@ -18,12 +19,6 @@ const fileExtensionFromType = (type) => {
   }
 };
 
-const buildPublicUrl = (baseUrl, key) => {
-  const trimmedBase = String(baseUrl || "").trim().replace(/\/+$/, "");
-  const trimmedKey = String(key || "").trim().replace(/^\/+/, "");
-  return `${trimmedBase}/${trimmedKey}`;
-};
-
 export const onRequestPost = async ({ request, env }) => {
   const sessionUser = await getSessionUser(request, env);
   if (!sessionUser) {
@@ -32,11 +27,6 @@ export const onRequestPost = async ({ request, env }) => {
 
   if (!env.PROOFS) {
     return jsonError("R2-Binding 'PROOFS' fehlt. Bitte in Cloudflare unter Pages > Settings > Bindings hinzufuegen.", 500);
-  }
-
-  const publicBaseUrl = cleanText(env.PROOFS_PUBLIC_BASE_URL);
-  if (!publicBaseUrl.startsWith("http://") && !publicBaseUrl.startsWith("https://")) {
-    return jsonError("Variable PROOFS_PUBLIC_BASE_URL fehlt oder ist ungueltig.", 500);
   }
 
   const formData = await request.formData();
@@ -59,15 +49,15 @@ export const onRequestPost = async ({ request, env }) => {
   }
 
   const discordId = cleanText(sessionUser.id);
-  const safeName = cleanText(file.name)
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
   const extension = fileExtensionFromType(file.type);
-  const timestamp = Date.now();
-  const key = `${discordId}/${timestamp}-${safeName || "proof"}.${extension}`;
+  const key = `${discordId}/current-proof.${extension}`;
+
+  for (const candidateExtension of KNOWN_EXTENSIONS) {
+    if (candidateExtension === extension) {
+      continue;
+    }
+    await env.PROOFS.delete(`${discordId}/current-proof.${candidateExtension}`);
+  }
 
   await env.PROOFS.put(key, await file.arrayBuffer(), {
     httpMetadata: {
@@ -78,9 +68,12 @@ export const onRequestPost = async ({ request, env }) => {
     },
   });
 
+  const version = Date.now();
+
   return jsonResponse({
     ok: true,
-    key,
-    proofUrl: buildPublicUrl(publicBaseUrl, key),
+    proofStorageRef: `r2:${key}`,
+    proofUrl: `/api/proof?id=${encodeURIComponent(discordId)}&v=${version}`,
+    version,
   });
 };

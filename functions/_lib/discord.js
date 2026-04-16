@@ -12,6 +12,7 @@ const encoder = new TextEncoder();
 const isPublicHttpUrl = (value) => /^https?:\/\//i.test(String(value || "").trim());
 const isInlineProofDataUrl = (value) =>
   /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(String(value || "").trim());
+const isR2ProofReference = (value) => /^r2:/i.test(String(value || "").trim());
 
 const hexToBytes = (value) =>
   Uint8Array.from((value || "").match(/.{1,2}/g) || [], (pair) => Number.parseInt(pair, 16));
@@ -176,7 +177,7 @@ const buildGearEmbed = (entry, origin) => {
   }
 
   const proofImageValue =
-    isInlineProofDataUrl(entry.proof_url) && entry.discord_id
+    (isInlineProofDataUrl(entry.proof_url) || isR2ProofReference(entry.proof_url)) && entry.discord_id
       ? `/api/proof?id=${encodeURIComponent(String(entry.discord_id))}`
       : entry.proof_url;
   const proofImageUrl = absoluteUrl(origin, proofImageValue);

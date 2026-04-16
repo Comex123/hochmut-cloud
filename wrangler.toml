@@ -6,7 +6,6 @@ pages_build_output_dir = "."
 GUILD_NAME = "Hochmut"
 DISCORD_INVITE = ""
 DISCORD_CLIENT_ID = "1359156234028191985"
-PROOFS_PUBLIC_BASE_URL = "HIER_DEINE_R2_DEV_URL_EINFUEGEN"
 
 [[d1_databases]]
 binding = "DB"

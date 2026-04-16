@@ -4,14 +4,20 @@ import { SEED_GEAR_ENTRIES } from "./seed-data.js";
 const isInlineProofDataUrl = (value) =>
   /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(String(value || "").trim());
 
-const normalizeProofUrl = (value, discordId = "") => {
+const isR2ProofReference = (value) => /^r2:/i.test(String(value || "").trim());
+
+const normalizeProofUrl = (value, discordId = "", cacheToken = "") => {
   const proofUrl = String(value || "").trim();
   if (!proofUrl) {
     return "";
   }
 
   if (isInlineProofDataUrl(proofUrl) && discordId) {
-    return `/api/proof?id=${encodeURIComponent(String(discordId))}`;
+    return `/api/proof?id=${encodeURIComponent(String(discordId))}${cacheToken ? `&v=${encodeURIComponent(String(cacheToken))}` : ""}`;
+  }
+
+  if (isR2ProofReference(proofUrl) && discordId) {
+    return `/api/proof?id=${encodeURIComponent(String(discordId))}${cacheToken ? `&v=${encodeURIComponent(String(cacheToken))}` : ""}`;
   }
 
   if (proofUrl.startsWith("/proofs/")) {
@@ -67,8 +73,8 @@ const mapRowToEntry = (row) => {
     contribution_points: row.contribution_points || "",
     life_skills: lifeSkills,
     notes: row.notes || "",
-    proof: normalizeProofUrl(row.proof_url, row.discord_id),
-    proof_url: normalizeProofUrl(row.proof_url, row.discord_id),
+    proof: normalizeProofUrl(row.proof_url, row.discord_id, row.updated_at),
+    proof_url: normalizeProofUrl(row.proof_url, row.discord_id, row.updated_at),
     portrait_url: getPortraitUrl(row.player_class),
     updated_at: row.updated_at || "",
   };
